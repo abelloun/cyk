@@ -59,7 +59,7 @@ class RDParser:
 			if str == "":
 				return None, ""
 			elif ignore:
-				self.ignore(ignore, parse, str, mem)
+				return self.ignore(ignore, parse, str, mem)
 			return None
 		return parse
 
