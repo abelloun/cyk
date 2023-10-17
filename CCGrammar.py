@@ -158,10 +158,10 @@ class CCGTypeAnnotation(CCGType):
     def match(this, data, sigma):
         if not isinstance(data, CCGTypeAnnotation):
             return this.type.match(data, sigma)
-        #~ if this.annot == data.annot:
-            #~ return this.type.match(data.type, sigma)
-        return this.type.match(data.type, sigma)
-        #~ return None
+        if this.annot == data.annot:
+            return this.type.match(data.type, sigma)
+        #~ return this.type.match(data.type, sigma)
+        return None
 
 
 CCGTypeParser = rd.grow("type", lambda type: rd.alt(
