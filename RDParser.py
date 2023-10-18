@@ -7,6 +7,11 @@ import re
 ################################################
 class RDParser:
 
+
+    ################################
+    ## ignore the part of the input
+    ## parsed by the ignore parameter
+    ################################
     @staticmethod
     def ignore(ignore, parse, str, mem):
         ign = ignore(str, mem)
@@ -14,6 +19,10 @@ class RDParser:
             return None
         return parse(ign[1], mem)
 
+
+    ################################
+    ## parse a string
+    ################################
     @classmethod
     def str(self, strg):
         l = len(strg)
@@ -26,6 +35,10 @@ class RDParser:
             return None
         return parse
 
+
+    ################################
+    ## parse a regex
+    ################################
     @classmethod
     def rgx(self, regex):
         reg = re.compile(regex)
@@ -39,17 +52,6 @@ class RDParser:
             return None
         return parse
 
-    def val(val):
-        def parse(str, mem, ignore = None):
-            return val, str
-        return parse
-
-    @staticmethod
-    def raw(_parse):
-        def parse(str, mem, ignore = None):
-            return _parse(str, mem)
-        return parse
-
     ################################
     ## $ : end of stream
     ################################
@@ -61,6 +63,26 @@ class RDParser:
             elif ignore:
                 return self.ignore(ignore, parse, str, mem)
             return None
+        return parse
+
+
+    ################################
+    ## simply return a value
+    ################################
+    @staticmethod
+    def val(val):
+        def parse(str, mem, ignore = None):
+            return val, str
+        return parse
+
+
+    ################################
+    ## skip ignore
+    ################################
+    @staticmethod
+    def raw(_parse):
+        def parse(str, mem, ignore = None):
+            return _parse(str, mem)
         return parse
 
 
