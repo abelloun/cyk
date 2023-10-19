@@ -84,6 +84,24 @@ class CCGTypeVar(CCGType):
         return sigma[this.name].match(data, sigma)
 
 
+class CCGTypeAtomicVar(CCGType):
+    def __init__(this, name):
+        this.name = name
+    def show(this):
+        return f"@{this.name}"
+    def expand(this, name, type):
+        return type if this.name == name else this
+    def replace(this, sigma):
+        return sigma[this.name] if this.name in sigma else this
+    def match(this, data, sigma):
+        if not isinstance(data, CCGTypeAtomic):
+            return False
+        if (this.name not in sigma):
+            sigma[this.name] = data
+            return True
+        return sigma[this.name].match(data, sigma)
+
+
 class CCGTypeAtomic(CCGType):
     def __init__(this, name):
         this.name = name

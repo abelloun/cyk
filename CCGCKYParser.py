@@ -1,5 +1,5 @@
 from RDParser import RDParser as rd
-from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeComposite, CCGExprConcat, LambdaTermApplication, LambdaTermLambda, LambdaTermVar
+from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeAtomicVar, CCGTypeComposite, CCGExprConcat, LambdaTermApplication, LambdaTermLambda, LambdaTermVar
 from functools import reduce
 ####################################
 ## Inference Class
@@ -95,13 +95,15 @@ CompositionRight = Inference("B>",
 )
 
 TypeRaisingLeft = Inference("T<",
-    [Judgement(CCGExprVar("a"), CCGTypeVar("X"))],
-    Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeVar("X"))))
+    [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
+    Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeVar("X")))),
+    lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None
 )
 
 TypeRaisingRight = Inference("T>",
-    [Judgement(CCGExprVar("a"), CCGTypeVar("X"))],
-    Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeVar("X"))))
+    [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
+    Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeVar("X")))),
+    lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None
 )
 
 ####################################
@@ -113,10 +115,22 @@ def CCGCKYParser(ccg, str):
     l = len(stream)
     passes = [{} for i in stream]
     cache = {}
+
+    # Terminal symbols recognition
     for i in range(l):
         if stream[i] not in ccg.rules:
             raise Exception(f"Token not found \"{stream[i]}\"!")
         cache[f"{i}:{i}"] = ccg.rules[stream[i]]
+
+    # Type raising application
+    for k in cache:
+        toadd = []
+        for e in cache[k]:
+            res = TypeRaisingLeft.match([e])
+            if res: toadd.append(res)
+            res = TypeRaisingRight.match([e])
+            if res: toadd.append(res)
+        cache[k] += toadd
 
     for w in range(1, l):
         for s in range(0, l - w):
