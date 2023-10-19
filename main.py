@@ -258,7 +258,7 @@ def run(txt):
                 #~ q.reverse()
                 #~ print("\n".join([qq.show() for qq in q]))
                 #~ print("")
-            #~ print("\n\n\n\n\n")
+            print("\n\n\n\n\n")
         else:
             print(f"@@@@@@@@@@@@ ECHEC on ::: {str} @@@@@@@@@@@@\n")
 

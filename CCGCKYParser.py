@@ -1,5 +1,5 @@
 from RDParser import RDParser as rd
-from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeComposite, CCGExprConcat
+from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeComposite, CCGExprConcat, LambdaTermApplication, LambdaTermLambda, LambdaTermVar
 from functools import reduce
 ####################################
 ## Inference Class
@@ -78,7 +78,8 @@ CompositionLeft = Inference("B<",
     Judgement(
         CCGExprConcat(CCGExprVar("b"), CCGExprVar("a")),
         CCGTypeComposite(0, CCGTypeVar("X"), CCGTypeVar("Z"))
-    )
+    ),
+    lambda data: LambdaTermLambda("x", LambdaTermApplication(data[1].sem, LambdaTermApplication(data[0].sem, LambdaTermVar("x")))) if data[0].sem and data[1].sem else None
 )
 
 CompositionRight = Inference("B>",
@@ -89,7 +90,8 @@ CompositionRight = Inference("B>",
     Judgement(
         CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")),
         CCGTypeComposite(1, CCGTypeVar("X"), CCGTypeVar("Z"))
-    )
+    ),
+    lambda data: LambdaTermLambda("x", LambdaTermApplication(data[0].sem, LambdaTermApplication(data[1].sem, LambdaTermVar("x")))) if data[0].sem and data[1].sem else None
 )
 
 TypeRaisingLeft = Inference("T<",
