@@ -26,7 +26,7 @@ grammar = '''
     AdvTM :: VbTransM\\VbTransM
     AdvTF :: VbTransF\\VbTransF
 
-    chat => Nom[Masc] {\\x. chat(x)}
+    chat =>(1) Nom[Masc] {\\x. chat(x)}
     fromage => Nom[Masc] {\\x. fromage(x)}
     rat => Nom[Masc] {\\x. rat(x)}
     voisin => Nom[Masc] {\\x. voisin(x)}
@@ -45,8 +45,8 @@ grammar = '''
     mes => DetFem  {\\P. P}
     ses => DetMascPlur  {\\P. P}
     ses => DetFemPlur  {\\P. P}
-    un => DetMasc   {\\P. P}
-    Un => DetMasc   {\\P. P}
+    un =>(1) DetMasc   {\\P. P}
+    Un =>(1) DetMasc   {\\P. P}
 
     la => AnteposMasc {\\P. P(feminin)}
     le => AnteposMasc {\\P. P(masculin)}
@@ -238,11 +238,34 @@ def run(txt):
     ccg = CCGrammar(grammar)
     #~ print(ccg.show())
     for str in [str1 for str in txt.split("\n") for str1 in [str.strip()] if str1]:
-        CCGCKYParser(ccg, str)
+        print("##########################################################################################")
+        print(f"# Parsing de : \"{str}\" :")
+        print("##########################################################################################\n")
+        parses = CCGCKYParser(ccg, str)
+        if parses:
+            for p in parses:
+                print(p.show())
+                ps = [p]
+                q = []
+                while ps:
+                    p = ps[0]
+                    ps = ps[1:]
+                    q.append(p)
+                    #~ print(p.show())
+                    if p.derivation:
+                        combinator, sigma, judgs = p.derivation
+                        ps = ps + judgs
+                #~ q.reverse()
+                #~ print("\n".join([qq.show() for qq in q]))
+                #~ print("")
+            #~ print("\n\n\n\n\n")
+        else:
+            print(f"@@@@@@@@@@@@ ECHEC on ::: {str} @@@@@@@@@@@@\n")
+
 
 
 txt0 = '''
-    Le chat que mon voisin lui donne mange
+    Un chat dort
 '''
 
 run(txt)

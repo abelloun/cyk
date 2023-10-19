@@ -11,6 +11,9 @@ class Inference:
         this.concl = concl
         this.sem = sem
 
+    def __str__(this):
+        return this.show()
+
     def show(this):
         def center(w, l):
             return " " * max(0, int((w - l)/ 2))
@@ -24,14 +27,21 @@ class Inference:
         ldn = len(down)
         wdt = max(ldn, lup)
         rep = "-" * wdt
-        return f"{center(wdt, lup)}{up}\n{rep}{this.name}\n{center(wdt, ldn)}{down}"
+        xxx = " " * (wdt - ldn + 1 - max(0, int((wdt - ldn)/ 2)))
+        return f"{center(wdt, lup)}{up}\n{rep}{this.name}\n{center(wdt, ldn)}{down}{xxx}"
 
     def match(this, data):
         sigma = {}
         for (pat, dat) in zip(this.hyps, data):
             if not pat.match(dat, sigma):
                 return None
-        return this.concl.replace(sigma)
+        sem = None
+        if this.sem:
+            sem = (this.sem)(data)
+        return this.concl.replace(sigma).deriving(this, sigma, data, sum([d.weight for d in data]), sem)
+
+    def replace(this, sigma):
+        return Inference(this.name, [h.replace(sigma) for h in this.hyps], this.concl.replace(sigma), this.sem)
 
 ####################################
 ## Concrete Inferences Rules
@@ -44,7 +54,8 @@ ApplicationLeft = Inference("<",
     Judgement(
         CCGExprConcat(CCGExprVar("b"), CCGExprVar("a")),
         CCGTypeVar("X")
-    )
+    ),
+    lambda data: data[1].sem.apply(data[0].sem) if data[0].sem and data[1].sem else None
 )
 
 ApplicationRight = Inference(">",
@@ -55,7 +66,8 @@ ApplicationRight = Inference(">",
     Judgement(
         CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")),
         CCGTypeVar("X")
-    )
+    ),
+    lambda data: data[0].sem.apply(data[1].sem) if data[0].sem and data[1].sem else None
 )
 
 CompositionLeft = Inference("B<",
@@ -90,12 +102,6 @@ TypeRaisingRight = Inference("T>",
     Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeVar("X"))))
 )
 
-
-def mapShow(x):
-    def concat(x, y):
-        return x + y[1].show()
-    return reduce(concat, x, "")
-
 ####################################
 ## CCG CKY Parser
 ####################################
@@ -108,7 +114,6 @@ def CCGCKYParser(ccg, str):
     for i in range(l):
         if stream[i] not in ccg.rules:
             raise Exception(f"Token not found \"{stream[i]}\"!")
-        #~ passes[0][f"{i}:{i}"] = ccg.rules[stream[i]]
         cache[f"{i}:{i}"] = ccg.rules[stream[i]]
 
     for w in range(1, l):
@@ -124,17 +129,7 @@ def CCGCKYParser(ccg, str):
                             if result:
                                 cache[f"{s}:{j}"].append(result)
 
-    #~ for (k, i) in cache.items():
-        #~ for ii in i:
-            #~ print(f"{k} => {ii.show()}")
-
-    #~ print([mapShow(s) for s in passes[0]])
-
-    if len(cache[f"{0}:{l - 1}"]):
-        for i in cache[f"{0}:{l - 1}"]:
-            print(i.show())
-    else:
-        print(f"############### ECHEC on ::: {str}")
+    return cache[f"{0}:{l - 1}"]
 
 
 

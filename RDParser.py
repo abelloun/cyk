@@ -7,7 +7,6 @@ import re
 ################################################
 class RDParser:
 
-
     ################################
     ## ignore the part of the input
     ## parsed by the ignore parameter
@@ -51,6 +50,7 @@ class RDParser:
                 return self.ignore(ignore, parse, str, mem)
             return None
         return parse
+
 
     ################################
     ## $ : end of stream
@@ -179,6 +179,7 @@ class RDParser:
                 return act(res[0]), res[1]
             return None
         return parse
+
 
     ################################
     ## Left recursion
