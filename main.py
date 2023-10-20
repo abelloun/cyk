@@ -245,16 +245,16 @@ def run(txt):
         if parses:
             for p in parses:
                 print(p.show())
-                ps = [p]
-                q = []
-                while ps:
-                    p = ps[0]
-                    ps = ps[1:]
-                    q.append(p)
+                #~ ps = [p]
+                #~ q = []
+                #~ while ps:
+                    #~ p = ps[0]
+                    #~ ps = ps[1:]
+                    #~ q.append(p)
                     #~ print(p.show())
-                    if p.derivation:
-                        combinator, sigma, judgs = p.derivation
-                        ps = ps + judgs
+                    #~ if p.derivation:
+                        #~ combinator, sigma, judgs = p.derivation
+                        #~ ps = ps + judgs
                 #~ q.reverse()
                 #~ print("\n".join([qq.show() for qq in q]))
                 #~ print("")

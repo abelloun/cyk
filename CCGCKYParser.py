@@ -5,11 +5,12 @@ from functools import reduce
 ## Inference Class
 ####################################
 class Inference:
-    def __init__(this, name, hyps, concl, sem = None):
+    def __init__(this, name, hyps, concl, sem = None, helper = None):
         this.name = name
         this.hyps = hyps
         this.concl = concl
         this.sem = sem
+        this.helper = helper if helper else lambda x: x
 
     def __str__(this):
         return this.show()
@@ -32,19 +33,22 @@ class Inference:
 
     def match(this, data):
         sigma = {}
-        for (pat, dat) in zip(this.hyps, data):
+        hyps, concl = this.helper((this.hyps, this.concl))
+        for (pat, dat) in zip(hyps, data):
+            pat = pat.replace(sigma)
+            dat = dat.replace(sigma)
             if not pat.match(dat, sigma):
                 return None
         sem = None
         if this.sem:
             sem = (this.sem)(data)
-        return this.concl.replace(sigma).deriving(this, sigma, data, sum([d.weight for d in data]), sem)
+        return concl.replace(sigma).deriving(this, sigma, data, sum([d.weight for d in data]), sem)
 
     def replace(this, sigma):
         return Inference(this.name, [h.replace(sigma) for h in this.hyps], this.concl.replace(sigma), this.sem)
 
 ####################################
-## Concrete Inferences Rules
+## Concrete Inferences Rules (aka Combinators)
 ####################################
 ApplicationLeft = Inference("<",
     [
@@ -97,13 +101,15 @@ CompositionRight = Inference("B>",
 TypeRaisingLeft = Inference("T<",
     [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
     Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeVar("X")))),
-    lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None
+    lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None,
+    lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
 )
 
 TypeRaisingRight = Inference("T>",
     [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
     Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeVar("X")))),
-    lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None
+    lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None,
+    lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
 )
 
 ####################################
@@ -122,7 +128,7 @@ def CCGCKYParser(ccg, str):
             raise Exception(f"Token not found \"{stream[i]}\"!")
         cache[f"{i}:{i}"] = ccg.rules[stream[i]]
 
-    # Type raising application
+    # Root Type raising application
     for k in cache:
         toadd = []
         for e in cache[k]:
@@ -145,11 +151,14 @@ def CCGCKYParser(ccg, str):
                             if result:
                                 cache[f"{s}:{j}"].append(result)
 
+            # Type raising application
+            if j != (l - 1):
+                toadd = []
+                for e in cache[f"{s}:{j}"]:
+                    res = TypeRaisingLeft.match([e])
+                    if res: toadd.append(res)
+                    res = TypeRaisingRight.match([e])
+                    if res: toadd.append(res)
+                cache[f"{s}:{j}"] += toadd
+
     return cache[f"{0}:{l - 1}"]
-
-
-
-
-
-
-

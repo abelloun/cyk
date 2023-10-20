@@ -64,9 +64,65 @@ class CCGExprConcat(CCGExpr):
 ## CCG Types
 ################################################
 class CCGType:
+    count = -1
     def __str__(this):
         return this.show()
+    @classmethod
+    def fresh(self, var):
+        self.count += 1
+        return f"{var.split('_')[0]}_{self.count}"
+    @classmethod
+    def unify(self, left, right, sigma):
+        match (left, right):
 
+            # We don't allow matching a variable with another variable
+            case (CCGTypeVar(name=name1), CCGTypeVar(name=name2)):
+                return False
+            case (CCGTypeVar(name=name), any):
+                sigma[name] = any
+                return True
+            case (any, CCGTypeVar(name=name)):
+                sigma[name] = any
+                return True
+
+
+            case (CCGTypeAtomicVar(name=name1), CCGTypeAtomicVar(name=name2)):
+                if name1 != name2:
+                    sigma[name1] = CCGTypeAtomicVar(name=name2)
+                return True
+
+            case (CCGTypeAtomicVar(name=name1), CCGTypeAtomic(name=name2)):
+                sigma[name1] = CCGTypeAtomic(name=name2)
+                return True
+            case (CCGTypeAtomic(name=name2), CCGTypeAtomicVar(name=name1)):
+                sigma[name1] = CCGTypeAtomic(name=name2)
+                return True
+
+            case (CCGTypeAtomicVar(name=name1), CCGTypeAnnotation(type=CCGTypeAtomic(name=name2), annot=annot)):
+                sigma[name1] = CCGTypeAnnotation(type=CCGTypeAtomic(name=name2), annot=annot)
+                return True
+            case (CCGTypeAnnotation(type=CCGTypeAtomic(name=name2), annot=annot), CCGTypeAtomicVar(name=name1)):
+                sigma[name1] = CCGTypeAnnotation(type=CCGTypeAtomic(name=name2), annot=annot)
+                return True
+
+
+            case (CCGTypeAtomic(name=name1), CCGTypeAtomic(name=name2)):
+                return name1 == name2
+
+            case (CCGTypeAnnotation(type=t1, annot=annot1), CCGTypeAnnotation(type=t2, annot=annot2)):
+                return annot1 == annot2 and self.unify(t1, t2, sigma)
+
+            case (CCGTypeAnnotation(type=t1, annot=annot1), any):
+                return self.unify(t1, any, sigma)
+
+            case (any, CCGTypeAnnotation(type=t2, annot=annot2)):
+                return self.unify(any, t2, sigma)
+
+
+            case (CCGTypeComposite(dir=dir1, left=left1, right=right1), CCGTypeComposite(dir=dir2, left=left2, right=right2)):
+                return dir1 == dir2 and self.unify(left1, left2, sigma) and self.unify(right1.replace(sigma), right2.replace(sigma), sigma)
+
+        return False
 
 class CCGTypeVar(CCGType):
     def __init__(this, name):
@@ -301,7 +357,9 @@ class Judgement:
     def match(this, data, sigma):
         if not this.expr.match(data.expr, sigma):
             return None
-        if not this.type.match(data.type, sigma):
+        #~ if not this.type.match(data.type, sigma):
+            #~ return None
+        if not CCGType.unify(this.type, data.type, sigma):
             return None
         return True
     def replace(this, sigma):
