@@ -76,6 +76,7 @@ class CCGType:
         match (left, right):
 
             # We don't allow matching a variable with another variable
+            # We don't want it to prevent bad types from forming
             case (CCGTypeVar(name=name1), CCGTypeVar(name=name2)):
                 return False
             case (CCGTypeVar(name=name), any):
@@ -133,11 +134,6 @@ class CCGTypeVar(CCGType):
         return type if this.name == name else this
     def replace(this, sigma):
         return sigma[this.name] if this.name in sigma else this
-    def match(this, data, sigma):
-        if this.name not in sigma:
-            sigma[this.name] = data
-            return True
-        return sigma[this.name].match(data, sigma)
 
 
 class CCGTypeAtomicVar(CCGType):
@@ -149,13 +145,6 @@ class CCGTypeAtomicVar(CCGType):
         return type if this.name == name else this
     def replace(this, sigma):
         return sigma[this.name] if this.name in sigma else this
-    def match(this, data, sigma):
-        if not isinstance(data, CCGTypeAtomic):
-            return False
-        if (this.name not in sigma):
-            sigma[this.name] = data
-            return True
-        return sigma[this.name].match(data, sigma)
 
 
 class CCGTypeAtomic(CCGType):
@@ -167,10 +156,6 @@ class CCGTypeAtomic(CCGType):
         return type if this.name == name else this
     def replace(this, sigma):
         return this
-    def match(this, data, sigma):
-        if isinstance(data, CCGTypeAnnotation):
-            data = data.type
-        return isinstance(data, CCGTypeAtomic) and this.name == data.name
 
 
 class CCGTypeComposite(CCGType):
@@ -185,10 +170,6 @@ class CCGTypeComposite(CCGType):
         return CCGTypeComposite(this.dir, this.left.expand(name, type), this.right.expand(name, type))
     def replace(this, sigma):
         return CCGTypeComposite(this.dir, this.left.replace(sigma), this.right.replace(sigma))
-    def match(this, data, sigma):
-        if not isinstance(data, CCGTypeComposite) or this.dir != data.dir:
-            return False
-        return this.left.match(data.left, sigma) and this.right.match(data.right, sigma)
 
 
 class CCGTypeAnnotation(CCGType):
@@ -201,12 +182,6 @@ class CCGTypeAnnotation(CCGType):
         return CCGTypeAnnotation(this.type.expand(name, type), this.annot)
     def replace(this, sigma):
         return CCGTypeAnnotation(this.type.replace(sigma), this.annot)
-    def match(this, data, sigma):
-        if not isinstance(data, CCGTypeAnnotation):
-            return this.type.match(data, sigma)
-        if this.annot == data.annot:
-            return this.type.match(data.type, sigma)
-        return False
 
 
 CCGTypeParser = rd.grow("type", lambda type: rd.alt(
