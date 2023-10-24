@@ -78,7 +78,9 @@ class CCGType:
             # We don't allow matching a variable with another variable
             # We don't want it to prevent bad types from forming
             case (CCGTypeVar(name=name1), CCGTypeVar(name=name2)):
-                return False
+                if name1 != name2:
+                    sigma[name1] = CCGTypeVar(name2)
+                return True
             case (CCGTypeVar(name=name), any):
                 sigma[name] = any
                 return True
@@ -121,7 +123,10 @@ class CCGType:
 
 
             case (CCGTypeComposite(dir=dir1, left=left1, right=right1), CCGTypeComposite(dir=dir2, left=left2, right=right2)):
-                return dir1 == dir2 and self.unify(left1, left2, sigma) and self.unify(right1.replace(sigma), right2.replace(sigma), sigma)
+                #~ print(f"Match compo : {left1.show()} <=> {left2.show()}")
+                rr = dir1 == dir2 and self.unify(left1, left2, sigma) and self.unify(right1.replace(sigma), right2.replace(sigma), sigma)
+                #~ print("OKKKK" if rr else "KOOO")
+                return rr
 
         return False
 
@@ -133,7 +138,12 @@ class CCGTypeVar(CCGType):
     def expand(this, name, type):
         return type if this.name == name else this
     def replace(this, sigma):
-        return sigma[this.name] if this.name in sigma else this
+        if this.name not in sigma:
+            return this
+        if isinstance(sigma[this.name], CCGTypeVar):
+            return sigma[this.name].replace(sigma)
+
+        return sigma[this.name]
 
 
 class CCGTypeAtomicVar(CCGType):

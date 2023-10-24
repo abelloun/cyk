@@ -39,6 +39,8 @@ class Inference:
             dat = dat.replace(sigma)
             if not pat.match(dat, sigma):
                 return None
+            #~ print(f"ok")
+            #~ print([f"{k}: {sigma[k].show()}" for k in sigma])
         sem = None
         if this.sem:
             sem = (this.sem)(data)
