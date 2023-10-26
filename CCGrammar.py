@@ -1,5 +1,6 @@
 from random import randint
 from functools import reduce
+from itertools import product
 from RDParser import RDParser as rd
 
 ################################################
@@ -327,18 +328,20 @@ LambdaTermParser = rd.grow('expr', lambda expr: rd.alt(
 ## Judgement ( CCGExpr => CCGType )
 ####################################
 class Judgement:
-    def __init__(this, expr, type, weight = 0, sem = None, derivation = None):
+    def __init__(this, expr, type, sem = None, derivation = None, weight = 0):
         this.expr = expr
         this.type = type
-        this.weight = weight
+        this.cpt = 0
         this.sem = sem
-        this.derivation = derivation
+        this.derivation = derivation if derivation else [{"weight": weight,
+                                                          "derivation": []}]
+
     def show(this):
         weight = f" (weight: {str(this.weight)}) " if this.weight else ""
         sem = (" { %s }" % this.sem.show()) if this.sem else ""
         return f"{this.expr.show()}:{weight}{this.type.show()}{sem}"
     def expand(this, name, type):
-        return Judgement(this.expr, this.type.expand(name, type), this.weight, this.sem, this.derivation)
+        return Judgement(this.expr, this.type.expand(name, type), sem = this.sem, derivation = this.derivation)
     def match(this, data, sigma):
         if not this.expr.match(data.expr, sigma):
             return None
@@ -348,11 +351,14 @@ class Judgement:
             return None
         return True
     def replace(this, sigma):
-        return Judgement(this.expr.replace(sigma), this.type.replace(sigma), this.weight, this.sem, this.derivation)
-    def deriving(this, combinator, sigma, judmts, weight, sem = None):
-        this.derivation = [combinator, sigma, judmts]
+        return Judgement(this.expr.replace(sigma), this.type.replace(sigma), sem = this.sem, derivation = this.derivation)
+    def deriving(this, combinator, sigma, judmts, sem=None):
+        this.derivation = []
+        derivations_list = [judgment.derivation for judgment in judmts]
+        for derivations in product(*derivations_list):
+            total_weight = sum(derivation["weight"] for derivation in derivations)
+            this.derivation.append({"weight": total_weight, "derivation": [combinator, sigma, judmts]})
         this.sem = sem
-        this.weight = weight
         return this
 
 
@@ -383,7 +389,7 @@ class CCGrammar:
     lmbda = sel(1, rd.seq(rd.str("{"), LambdaTermParser, rd.str("}")))
     judgm = rd.act(
         rd.seq(rd.rgx("[^\s]+"), rd.str("=>"), weight, CCGTypeParser, rd.mbe(lmbda)),
-        lambda x: {"judgm": Judgement(CCGExprString(x[0]), x[3], x[2], x[4])}
+        lambda x: {"judgm": Judgement(CCGExprString(x[0]), x[3], weight = x[2], sem = x[4])}
     )
     comment = rd.act(rd.seq(rd.str("#"), rd.rgx(".*")), lambda x: None)
     grammar = sel(0, rd.seq(rd.lst(sel(1, rd.seq(newLines, rd.alt(comment, axioms, alias, judgm)))), newLines, rd.end()))

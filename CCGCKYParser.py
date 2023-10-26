@@ -1,6 +1,7 @@
 from RDParser import RDParser as rd
 from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeAtomicVar, CCGTypeAtomic, CCGTypeComposite, CCGExprConcat, LambdaTermApplication, LambdaTermLambda, LambdaTermVar
 from functools import reduce
+from collections import defaultdict
 ####################################
 ## Inference Class
 ####################################
@@ -43,7 +44,7 @@ class Inference:
         sem = None
         if this.sem:
             sem = (this.sem)(data)
-        return concl.replace(sigma).deriving(this, sigma, data, sum([d.weight for d in data]), sem)
+        return concl.replace(sigma).deriving(this, sigma, data, sem)
 
     def replace(this, sigma):
         return Inference(this.name, [h.replace(sigma) for h in this.hyps], this.concl.replace(sigma), this.sem)
@@ -114,56 +115,63 @@ TypeRaisingLeft = Inference("T>",
 )
 
 
+
+def add_combinations(combinator, left, right, current_chart):
+    result = combinator.match([left, right])
+    if result:
+        current_chart.add(result)
+    return current_chart
+
+def compute_chart(chart, span, start, combinators, use_typer=False):
+    current_chart = set()
+    for step in range(1, span):
+        mid = start + step
+        left_right_pairs = [(left, right) for left in chart[(start, mid)] for right in chart[(mid, start + span)]]
+
+        for combinator in combinators:
+            for left, right in left_right_pairs:
+                add_combinations(combinator, left, right, current_chart)
+
+        if use_typer:
+            for left, right in left_right_pairs:
+                if isinstance(left.type, CCGTypeComposite) and not isinstance(right.type, CCGTypeComposite):
+                    new_right = TypeRaisingRight.match([right])
+                    for combinator in combinators:
+                        add_combinations(combinator, left, new_right, current_chart)
+                elif not isinstance(left.type, CCGTypeComposite) and isinstance(right.type, CCGTypeComposite):
+                    new_left = TypeRaisingLeft.match([left])
+                    for combinator in combinators:
+                        add_combinations(combinator, new_left, right, current_chart)
+    return current_chart
+
+def reconstruct(parses):
+    result = []
+    for parse in parses:
+        for deriv in parse.derivation:
+            past = reconstruct(deriv["derivation"][2]) if deriv["derivation"] else []
+            result.append([parse.type] + past)
+    return result
+
+
+
 ####################################
 ## CCG CKY Parser
 ####################################
 def CCGCKYParser(ccg, input_string, use_typer=False):
-    combinators = [ApplicationLeft, ApplicationRight, CompositionLeft, CompositionRight]
+    combinators = {ApplicationLeft, ApplicationRight, CompositionLeft, CompositionRight}
     tokens = input_string.strip().split()
     num_tokens = len(tokens)
     chart = {}
-    cache = {}
 
     # Reconnaisance des symboles terminaux
     for i, token in enumerate(tokens):
         if token not in ccg.rules:
             raise Exception(f"Token not found: \"{token}\"")
 
-        chart[f"{i}:{i+1}"] = set([elem for elem in ccg.rules[token]])
-
-
-    def add_combinations(combinator, left, right, current_chart, cache):
-        if (left.type, right.type) not in cache:
-            result = combinator.match([left, right])
-            if result:
-                current_chart.add(result)
-                cache[(left.type, right.type)] = result
-        return current_chart
+        chart[(i, i+1)] = set(ccg.rules[token])
 
     for span in range(2, num_tokens + 1):
         for start in range(0, num_tokens - span + 1):
-            end = start + span
-            chart[f"{start}:{end}"] = set()
-            for step in range(1, span):
-                mid = start + step
-                for left in chart[f"{start}:{mid}"]:
+            chart[(start, start + span)] = compute_chart(chart, span, start, combinators, use_typer)
 
-                    new_left = TypeRaisingLeft.match([left]) if use_typer else None
-
-                    for right in chart[f"{mid}:{end}"]:
-
-                        current_chart = chart[f"{start}:{end}"]
-                        new_right = TypeRaisingRight.match([right]) if use_typer else None
-
-                        for combinator in combinators:
-                            current_chart = add_combinations(combinator, left, right, current_chart, cache)
-
-                            if new_left:
-                                current_chart = add_combinations(combinator, new_left, right, current_chart, cache)
-
-                            if new_right:
-                                current_chart = add_combinations(combinator, left, new_right, current_chart, cache)
-
-
-
-    return chart[f"{0}:{num_tokens}"]
+    return reconstruct(chart[(0, num_tokens)])
