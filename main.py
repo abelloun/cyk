@@ -1,5 +1,6 @@
 from CCGrammar import CCGrammar
 from CCGCKYParser import CCGCKYParser
+import time
 
 grammar = '''
 
@@ -235,16 +236,19 @@ txt_test='''
 
 
 def run(txt):
+    start_time = time.time()
     ccg = CCGrammar(grammar)
     #~ print(ccg.show())
     for str in [str1 for str in txt.split("\n") for str1 in [str.strip()] if str1]:
-        print("##########################################################################################")
-        print(f"# Parsing de : \"{str}\" :")
-        print("##########################################################################################\n")
-        parses = CCGCKYParser(ccg, str)
+        #print("##########################################################################################")
+        #print(f"# Parsing de : \"{str}\" :")
+        #print("##########################################################################################\n")
+        parses = CCGCKYParser(ccg, str, use_typer = True)
+        cpt = 0
         if parses:
             for p in parses:
-                print(p.show())
+                cpt += 1
+                #print(p.show())
                 #~ ps = [p]
                 #~ q = []
                 #~ while ps:
@@ -258,16 +262,15 @@ def run(txt):
                 #~ q.reverse()
                 #~ print("\n".join([qq.show() for qq in q]))
                 #~ print("")
-            print("\n\n\n\n\n")
+            print(cpt, str)
+            #print("\n\n\n\n\n")
         else:
             print(f"@@@@@@@@@@@@ ECHEC on ::: {str} @@@@@@@@@@@@\n")
+    print("TIME :", time.time() - start_time)
 
 
-
-txt0 = '''
-    Un chat dort
+txt0 = '''Le chat qui dort est noir
 '''
 
+#run(txt)
 run(txt)
-run(txt_test)
-

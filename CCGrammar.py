@@ -425,4 +425,3 @@ class CCGrammar:
         aliases = "\n".join([v.show() for v in this.aliases.values()])
         rules = "\n".join([f"{r.show()}" for rl in this.rules.values() for r in rl])
         return "\n".join([axioms, aliases, rules])
-

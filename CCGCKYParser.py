@@ -1,5 +1,5 @@
 from RDParser import RDParser as rd
-from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeAtomicVar, CCGTypeComposite, CCGExprConcat, LambdaTermApplication, LambdaTermLambda, LambdaTermVar
+from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeAtomicVar, CCGTypeAtomic, CCGTypeComposite, CCGExprConcat, LambdaTermApplication, LambdaTermLambda, LambdaTermVar
 from functools import reduce
 ####################################
 ## Inference Class
@@ -37,10 +37,9 @@ class Inference:
         for (pat, dat) in zip(hyps, data):
             pat = pat.replace(sigma)
             dat = dat.replace(sigma)
+            #print(pat.type, dat.type, sigma)
             if not pat.match(dat, sigma):
                 return None
-            #~ print(f"ok")
-            #~ print([f"{k}: {sigma[k].show()}" for k in sigma])
         sem = None
         if this.sem:
             sem = (this.sem)(data)
@@ -100,67 +99,71 @@ CompositionRight = Inference("B>",
     lambda data: LambdaTermLambda("x", LambdaTermApplication(data[0].sem, LambdaTermApplication(data[1].sem, LambdaTermVar("x")))) if data[0].sem and data[1].sem else None
 )
 
-TypeRaisingLeft = Inference("T<",
+TypeRaisingRight = Inference("T<",
     [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
     Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeVar("X")))),
     lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None,
     lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
 )
 
-TypeRaisingRight = Inference("T>",
+TypeRaisingLeft = Inference("T>",
     [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
     Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeVar("X")))),
     lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None,
     lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
 )
 
+
 ####################################
 ## CCG CKY Parser
 ####################################
-def CCGCKYParser(ccg, str):
+def CCGCKYParser(ccg, input_string, use_typer=False):
     combinators = [ApplicationLeft, ApplicationRight, CompositionLeft, CompositionRight]
-    stream = str.strip().split()
-    l = len(stream)
-    passes = [{} for i in stream]
+    tokens = input_string.strip().split()
+    num_tokens = len(tokens)
+    chart = {}
     cache = {}
 
-    # Terminal symbols recognition
-    for i in range(l):
-        if stream[i] not in ccg.rules:
-            raise Exception(f"Token not found \"{stream[i]}\"!")
-        cache[f"{i}:{i}"] = ccg.rules[stream[i]]
+    # Reconnaisance des symboles terminaux
+    for i, token in enumerate(tokens):
+        if token not in ccg.rules:
+            raise Exception(f"Token not found: \"{token}\"")
 
-    # Root Type raising application
-    for k in cache:
-        toadd = []
-        for e in cache[k]:
-            res = TypeRaisingLeft.match([e])
-            if res: toadd.append(res)
-            res = TypeRaisingRight.match([e])
-            if res: toadd.append(res)
-        cache[k] += toadd
+        chart[f"{i}:{i+1}"] = set([elem for elem in ccg.rules[token]])
 
-    for w in range(1, l):
-        for s in range(0, l - w):
-            j = s + w
-            cache[f"{s}:{j}"] = []
-            for e in range(s, j):
-                #~ print(f"{w} => ({s} : {j}) => {s}:{e}/{e+1}:{j} {str}")
-                for c in combinators:
-                    for left in cache[f"{s}:{e}"]:
-                        for right in cache[f"{e+1}:{j}"]:
-                            result = c.match([left, right])
-                            if result:
-                                cache[f"{s}:{j}"].append(result)
 
-            # Type raising application
-            if j != (l - 1):
-                toadd = []
-                for e in cache[f"{s}:{j}"]:
-                    res = TypeRaisingLeft.match([e])
-                    if res: toadd.append(res)
-                    res = TypeRaisingRight.match([e])
-                    if res: toadd.append(res)
-                cache[f"{s}:{j}"] += toadd
+    def add_combinations(combinator, left, right, current_chart, cache):
+        if (left.type, right.type) not in cache:
+            result = combinator.match([left, right])
+            if result:
+                current_chart.add(result)
+                cache[(left.type, right.type)] = result
+        return current_chart
 
-    return cache[f"{0}:{l - 1}"]
+    for span in range(2, num_tokens + 1):
+        for start in range(0, num_tokens - span + 1):
+            end = start + span
+            chart[f"{start}:{end}"] = set()
+            for step in range(1, span):
+                mid = start + step
+                for left in chart[f"{start}:{mid}"]:
+
+                    new_left = TypeRaisingLeft.match([left]) if use_typer else None
+
+                    for right in chart[f"{mid}:{end}"]:
+
+                        current_chart = chart[f"{start}:{end}"]
+                        new_right = TypeRaisingRight.match([right]) if use_typer else None
+
+                        for combinator in combinators:
+                            current_chart = add_combinations(combinator, left, right, current_chart, cache)
+
+                            if new_left:
+                                current_chart = add_combinations(combinator, new_left, right, current_chart, cache)
+
+                            if new_right:
+                                current_chart = add_combinations(combinator, left, new_right, current_chart, cache)
+
+
+
+    return chart[f"{0}:{num_tokens}"]
