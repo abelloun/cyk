@@ -116,40 +116,44 @@ TypeRaisingLeft = Inference("T>",
 
 
 
-def add_combinations(combinator, left, right, current_chart):
-    result = combinator.match([left, right])
-    if result:
-        current_chart.add(result)
+def add_combinations(combinators, left, right, current_chart):
+    for combinator in combinators:
+        result = combinator.match([left, right])
+        if result:
+            current_chart.add(result)
     return current_chart
 
-def compute_chart(chart, span, start, combinators, use_typer=False):
+def compute_chart(combinators, chart, span, start, use_typer=False):
     current_chart = set()
     for step in range(1, span):
         mid = start + step
         left_right_pairs = [(left, right) for left in chart[(start, mid)] for right in chart[(mid, start + span)]]
 
-        for combinator in combinators:
-            for left, right in left_right_pairs:
-                add_combinations(combinator, left, right, current_chart)
+        for left, right in left_right_pairs:
+            current_chart = add_combinations(combinators, left, right, current_chart)
+            if use_typer:
+                new_right = TypeRaisingRight.match([right])
+                if new_right:
+                    current_chart = add_combinations(combinators, left, new_right, current_chart)
+            if use_typer:
+                new_left = TypeRaisingLeft.match([left])
+                if new_left:
+                    current_chart = add_combinations(combinators, new_left, right, current_chart)
 
-        if use_typer:
-            for left, right in left_right_pairs:
-                if isinstance(left.type, CCGTypeComposite) and not isinstance(right.type, CCGTypeComposite):
-                    new_right = TypeRaisingRight.match([right])
-                    for combinator in combinators:
-                        add_combinations(combinator, left, new_right, current_chart)
-                elif not isinstance(left.type, CCGTypeComposite) and isinstance(right.type, CCGTypeComposite):
-                    new_left = TypeRaisingLeft.match([left])
-                    for combinator in combinators:
-                        add_combinations(combinator, new_left, right, current_chart)
     return current_chart
 
 def reconstruct(parses):
     result = []
     for parse in parses:
         for deriv in parse.derivation:
-            past = reconstruct(deriv["derivation"][2]) if deriv["derivation"] else []
-            result.append([parse.type] + past)
+
+            if deriv["derivation"]:
+                past = reconstruct(deriv["derivation"][2])
+                for subpast in past:
+                    result.append(subpast + [parse])
+            else:
+                result.append([parse])
+    #print(result)
     return result
 
 
@@ -158,11 +162,10 @@ def reconstruct(parses):
 ## CCG CKY Parser
 ####################################
 def CCGCKYParser(ccg, input_string, use_typer=False):
-    combinators = {ApplicationLeft, ApplicationRight, CompositionLeft, CompositionRight}
     tokens = input_string.strip().split()
     num_tokens = len(tokens)
     chart = {}
-
+    combinators = {ApplicationLeft, ApplicationRight, CompositionLeft, CompositionRight}
     # Reconnaisance des symboles terminaux
     for i, token in enumerate(tokens):
         if token not in ccg.rules:
@@ -172,6 +175,6 @@ def CCGCKYParser(ccg, input_string, use_typer=False):
 
     for span in range(2, num_tokens + 1):
         for start in range(0, num_tokens - span + 1):
-            chart[(start, start + span)] = compute_chart(chart, span, start, combinators, use_typer)
+            chart[(start, start + span)] = compute_chart(combinators, chart, span, start, use_typer)
 
-    return reconstruct(chart[(0, num_tokens)])
+    return [elem for elem in chart[(0, num_tokens)] if elem.type.show() == ccg.terminal]
