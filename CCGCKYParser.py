@@ -148,58 +148,71 @@ class CKYDerivation:
         this.past = past
         this.combinator = combinator
 
-    def sub_show(this):
+    def __str__(this):
+        return this.show()
+
+    def sub_show(this, sem=False):
         if not this.past:
             current_show = this.current.type.show()
             current_expr = this.current.expr.show()
+            current_sem = this.current.sem.show() if sem else ""
+
             offset = abs((len(current_show) - len(current_expr))//2)
             if len(current_show) > len(current_expr):
-                return offset*" " + current_expr + "\n" + current_show, len(current_show)
+                return offset*" " + current_expr + "\n" + current_show + current_sem, len(current_show) + len(current_sem)
             else:
-                return current_expr + "\n" + offset*" " + current_show, len(current_expr)
+                return current_expr + "\n" + offset*" " + current_show + current_sem, len(current_expr) + len(current_sem)
 
         if len(this.past) == 1:
             current_show = this.current.type.show()
-            lencurr = len(current_show)
+            current_sem = this.current.sem.show() if sem else ""
+            lencurr = len(current_show) + len(current_sem)
             comb = this.combinator.name
-            top, size = this.past[0].sub_show()
+            top, size = this.past[0].sub_show(sem)
             offset = abs((size - lencurr)//2)
             if size > lencurr:
-                return top + "\n" + size*"=" + comb + "\n" + offset*" " + current_show, size
+                return top + "\n" + size*"=" + comb + "\n" + offset*" " + current_show + current_sem, size
             else:
                 ntop = top.split("\n")
                 res = ""
                 for step in ntop:
                     res += offset*" " + step + "\n"
-                return res + lencurr*"=" + comb + "\n" + current_show, lencurr
+                return res + lencurr*"=" + comb + "\n" + current_show + current_sem, lencurr
 
         if len(this.past) == 2:
-            topl, sizel = this.past[0].sub_show()
-            topr, sizer = this.past[1].sub_show()
+            topl, sizel = this.past[0].sub_show(sem)
+            topr, sizer = this.past[1].sub_show(sem)
             totsize = sizel+sizer+3
             toplm = topl.split("\n")
             toprm = topr.split("\n")
             current_show = this.current.type.show()
+            current_sem = this.current.sem.show() if sem else ""
             comb = this.combinator.name
+            currsize = len(current_show)+ len(current_sem)
+            offset = abs((totsize-currsize)//2)
 
+            s = offset if currsize > totsize else 0
             res = ""
             while len(toplm) > len(toprm):
                 v = toplm.pop(0)
-                res += v + "\n"
+                res += s*" " + v + "\n"
             while len(toplm) < len(toprm):
                 v = toprm.pop(0)
-                res += (sizel+3)*" " + v + "\n"
+                res += s*" " + (sizel+3)*" " + v + "\n"
 
             while toplm:
                 vl = toplm.pop(0)
                 vd = toprm.pop(0)
-                res += vl + (sizel-len(vl)+3)*" " + vd + "\n"
+                res += s*" " + vl + (sizel-len(vl)+3)*" " + vd + "\n"
 
-            offset = (totsize-len(current_show))//2
-            return res + totsize*"=" + comb + "\n" + offset*" "+ current_show, totsize
+            if totsize > currsize:
+                return res + totsize*"=" + comb + "\n" + offset*" "+ current_show + current_sem, totsize
+            else:
+                return res + totsize*"=" + comb + "\n" + current_show + current_sem, currsize
 
-    def show(this):
-        return this.sub_show()[0]
+    def show(this, sem=False):
+        return this.sub_show(sem=sem)[0]
+
 def reconstruct(parses):
     result = []
     for parse in parses:

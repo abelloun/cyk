@@ -40,6 +40,8 @@ class CCGExprVar(CCGExpr):
 class CCGExprString(CCGExpr):
     def __init__(this, str):
         this.str = str
+    def __len__(this):
+        return len(this.str)
     def show(this):
         return f"\"{this.str}\""
     def replace(this, sigma):
@@ -53,6 +55,8 @@ class CCGExprConcat(CCGExpr):
     def __init__(this, left, right):
         this.left = left
         this.right = right
+    def __len__(this):
+        return len(this.left) + len(this.right)
     def show(this):
         return f"{this.left.show()} {this.right.show()}"
     def replace(this, sigma):
@@ -328,7 +332,7 @@ LambdaTermParser = rd.grow('expr', lambda expr: rd.alt(
 ## Judgement ( CCGExpr => CCGType )
 ####################################
 class Judgement:
-    def __init__(this, expr, type, sem = None, derivation = None, weight = 0):
+    def __init__(this, expr, type, sem = None, derivation = None, weight = 1):
         this.expr = expr
         this.type = type
         this.cpt = 0
@@ -336,10 +340,9 @@ class Judgement:
         this.derivation = derivation if derivation else [{"weight": weight,
                                                           "derivation": []}]
 
-    def show(this):
-        weight = f" (weight: {str(this.weight)}) " if this.weight else ""
-        sem = (" { %s }" % this.sem.show()) if this.sem else ""
-        return f"{this.expr.show()}:{weight}{this.type.show()}{sem}"
+    def show(this, printsem = False):
+        sem = (" { %s }" % this.sem.show()) if printsem and this.sem else ""
+        return f"{this.expr.show()}:{this.type.show()}{sem}"
     def expand(this, name, type):
         return Judgement(this.expr, this.type.expand(name, type), sem = this.sem, derivation = this.derivation)
     def match(this, data, sigma):
@@ -356,7 +359,7 @@ class Judgement:
         this.derivation = []
         derivations_list = [judgment.derivation for judgment in judmts]
         for derivations in product(*derivations_list):
-            total_weight = sum(derivation["weight"] for derivation in derivations)
+            total_weight = max(derivation["weight"] for derivation in derivations)
             this.derivation.append({"weight": total_weight, "derivation": [combinator, sigma, judmts]})
         this.sem = sem
         return this
@@ -405,12 +408,16 @@ class CCGrammar:
         this.axioms = {}
         this.aliases = {}
         this.rules = {}
+        this.terminal = None
         for stmt in this.parse(strGram):
             if stmt is None:
                 pass
             elif "axioms" in stmt:
                 for ax in stmt["axioms"]:
-                    this.axioms[ax] = ax
+                    if this.terminal:
+                        this.axioms[ax] = ax
+                    else:
+                        this.terminal = ax
             elif "alias" in stmt:
                 this.aliases[stmt["alias"].key] = stmt["alias"]
             elif "judgm" in stmt:
