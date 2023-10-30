@@ -142,17 +142,71 @@ def compute_chart(combinators, chart, span, start, use_typer=False):
 
     return current_chart
 
+class CKYDerivation:
+    def __init__(this, current, past, combinator):
+        this.current = current
+        this.past = past
+        this.combinator = combinator
+
+    def show(this):
+        if not this.past:
+            current_show = this.current.type.show()
+            current_expr = this.current.expr.show()
+            offset = abs((len(current_show) - len(current_expr))//2)
+            if len(current_show) > len(current_expr):
+                return offset*" " + current_expr + "\n" + current_show, len(current_show)
+            else:
+                return current_expr + "\n" + offset*" " + current_show, len(current_expr)
+
+        if len(this.past) == 1:
+            current_show = this.current.type.show()
+            lencurr = len(current_show)
+            comb = this.combinator.name
+            top, size = this.past[0].show()
+            offset = abs((size - lencurr)//2)
+            if size > lencurr:
+                return top + "\n" + size*"=" + comb + "\n" + offset*" " + current_show, size
+            else:
+                ntop = top.split("\n")
+                res = ""
+                for step in ntop:
+                    res += offset*" " + step + "\n"
+                return res + lencurr*"=" + comb + "\n" + current_show, lencurr
+
+        if len(this.past) == 2:
+            topl, sizel = this.past[0].show()
+            topr, sizer = this.past[1].show()
+            totsize = sizel+sizer+3
+            toplm = topl.split("\n")
+            toprm = topr.split("\n")
+            current_show = this.current.type.show()
+            comb = this.combinator.name
+
+            res = ""
+            while len(toplm) > len(toprm):
+                v = toplm.pop(0)
+                res += v + "\n"
+            while len(toplm) < len(toprm):
+                v = toprm.pop(0)
+                res += (sizel+3)*" " + v + "\n"
+
+            while toplm:
+                vl = toplm.pop(0)
+                vd = toprm.pop(0)
+                res += vl + (sizel-len(vl)+3)*" " + vd + "\n"
+
+            offset = (totsize-len(current_show))//2
+            return res + totsize*"=" + comb + "\n" + offset*" "+ current_show, totsize
+
 def reconstruct(parses):
     result = []
     for parse in parses:
         for deriv in parse.derivation:
-
             if deriv["derivation"]:
                 past = reconstruct(deriv["derivation"][2])
-                for subpast in past:
-                    result.append(subpast + [parse])
+                result.append(CKYDerivation(parse, past, deriv["derivation"][0]))
             else:
-                result.append([parse])
+                result.append(CKYDerivation(parse, None, None))
     #print(result)
     return result
 
@@ -177,4 +231,4 @@ def CCGCKYParser(ccg, input_string, use_typer=False):
         for start in range(0, num_tokens - span + 1):
             chart[(start, start + span)] = compute_chart(combinators, chart, span, start, use_typer)
 
-    return [elem for elem in chart[(0, num_tokens)] if elem.type.show() == ccg.terminal]
+    return reconstruct([elem for elem in chart[(0, num_tokens)] if elem.type.show() == ccg.terminal])

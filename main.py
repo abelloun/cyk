@@ -1,9 +1,8 @@
 from CCGrammar import CCGrammar
-from CCGCKYParser import CCGCKYParser
+from CCGCKYParser import CCGCKYParser, CKYDerivation
 import time
 
 grammar = '''
-
     :- Phrase, GrNom, Nom
     :- VerbeInf, PhraseInterro, GrQuestion, Prop, PP
 
@@ -190,7 +189,6 @@ txt = '''
     La souris dort et le chat de mon voisin attrape la souris
     Le chat dort et la souris dort
     Le chat et la souris dorment
-
     le chat mange la souris et le fromage
     la souris de mon chat et le fromage dorment
     un fromage très méchant mange le fromage
@@ -234,11 +232,9 @@ txt_test='''
     Un fromage est donné par le rat à la souris
 '''
 
-
 def run(txt):
     start_time = time.time()
     ccg = CCGrammar(grammar)
-    #~ print(ccg.show())
     for str in [str1 for str in txt.split("\n") for str1 in [str.strip()] if str1]:
         #print("##########################################################################################")
         #print(f"# Parsing de : \"{str}\" :")
@@ -247,6 +243,10 @@ def run(txt):
         cpt = 0
         if parses:
             for p in parses:
+                #print(p)
+                #print(p)
+                print(p.show()[0])
+                print("FIN DU PARSE\n")
                 cpt += 1
                 #print(p.show())
                 #~ ps = [p]
@@ -273,4 +273,4 @@ txt0 = '''Le chat qui dort est noir
 '''
 
 #run(txt)
-run(txt)
+run(txt0)
