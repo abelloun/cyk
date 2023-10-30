@@ -148,7 +148,7 @@ class CKYDerivation:
         this.past = past
         this.combinator = combinator
 
-    def show(this):
+    def sub_show(this):
         if not this.past:
             current_show = this.current.type.show()
             current_expr = this.current.expr.show()
@@ -162,7 +162,7 @@ class CKYDerivation:
             current_show = this.current.type.show()
             lencurr = len(current_show)
             comb = this.combinator.name
-            top, size = this.past[0].show()
+            top, size = this.past[0].sub_show()
             offset = abs((size - lencurr)//2)
             if size > lencurr:
                 return top + "\n" + size*"=" + comb + "\n" + offset*" " + current_show, size
@@ -174,8 +174,8 @@ class CKYDerivation:
                 return res + lencurr*"=" + comb + "\n" + current_show, lencurr
 
         if len(this.past) == 2:
-            topl, sizel = this.past[0].show()
-            topr, sizer = this.past[1].show()
+            topl, sizel = this.past[0].sub_show()
+            topr, sizer = this.past[1].sub_show()
             totsize = sizel+sizer+3
             toplm = topl.split("\n")
             toprm = topr.split("\n")
@@ -198,6 +198,8 @@ class CKYDerivation:
             offset = (totsize-len(current_show))//2
             return res + totsize*"=" + comb + "\n" + offset*" "+ current_show, totsize
 
+    def show(this):
+        return this.sub_show()[0]
 def reconstruct(parses):
     result = []
     for parse in parses:

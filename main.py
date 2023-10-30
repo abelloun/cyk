@@ -245,7 +245,7 @@ def run(txt):
             for p in parses:
                 #print(p)
                 #print(p)
-                print(p.show()[0])
+                print(p.show()) 
                 print("FIN DU PARSE\n")
                 cpt += 1
                 #print(p.show())
