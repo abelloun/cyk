@@ -6,11 +6,13 @@ grammar = '''
     :- Phrase, GrNom, Nom
     :- VerbeInf, PhraseInterro, PP
 
+    # Déterminants
     DetMasc :: GrNom[Masc]/Nom[Masc]
     DetFem :: GrNom[Fem]/Nom[Fem]
     DetMascPlur :: GrNom[MascPlur]/Nom[MascPlur]
     DetFemPlur :: GrNom[FemPlur]/Nom[FemPlur]
 
+    # Adjectifs
     AdjMascL :: Nom[Masc]/Nom[Masc]
     AdjFemL :: Nom[Fem]/Nom[Fem]
     AdjMascR :: Nom[Masc]\\Nom[Masc]
@@ -19,6 +21,8 @@ grammar = '''
     AdjFemPL :: Nom[FemPlur]/Nom[FemPlur]
     AdjMascPR :: Nom[MascPlur]\\Nom[MascPlur]
     AdjFemPR :: Nom[FemPlur]\\Nom[FemPlur]
+
+    # Verbes
     VbIntransSM :: Phrase\\GrNom[Masc]
     VbIntransSF :: Phrase\\GrNom[Fem]
     VbTransSM :: VbIntransSM/GrNom
@@ -27,6 +31,8 @@ grammar = '''
     VbIntransPF :: Phrase\\GrNom[FemPlur]
     VbTransPM :: VbIntransPM/GrNom
     VbTransPF :: VbIntransPF/GrNom
+
+    # Extras
     AnteposMasc :: VbIntransSM/VbTransSM
     AnteposFem :: VbIntransSF/VbTransSF
     AdvM :: VbIntransSM\\VbIntransSM
@@ -34,6 +40,10 @@ grammar = '''
     AdvTM :: VbTransSM\\VbTransSM
     AdvTF :: VbTransSF\\VbTransSF
 
+    #############################
+    #  Reconnaissance des mots  #
+    #############################
+    # Noms
     chat => Nom[Masc] {\\x. chat(x)}
     fromage => Nom[Masc] {\\x. fromage(x)}
     rat => Nom[Masc] {\\x. rat(x)}
@@ -43,6 +53,7 @@ grammar = '''
     souris => Nom[FemPlur] {\\x. souris(x)}
     dents => Nom[FemPlur] {\\x. dents(x)}
 
+    # Déterminants
     la => DetFem {\\P. P}
     le => DetMasc  {\\P. P}
     La => DetFem  {\\P. P}
@@ -56,23 +67,36 @@ grammar = '''
     un => DetMasc   {\\P. P}
     Un => DetMasc   {\\P. P}
 
+    # Antépositions
     la => AnteposMasc {\\P. P(feminin)}
     le => AnteposMasc {\\P. P(masculin)}
     la => AnteposFem {\\P. P(feminin)}
     le => AnteposFem {\\P. P(masculin)}
+    lui => AnteposMasc\\AnteposMasc {\\P. P} # Antéposition secondaire
+    lui => AnteposFem\\AnteposFem {\\P. P}
+    lui => ((Phrase/GrNom)/VbTransSM)\\GrNom {\\P. P}
+    lui => ((Phrase/GrNom)/VbTransSF)\\GrNom {\\P. P}
 
+    # Adjectifs
     méchant => AdjMascL {\\P z. (P(z) & méchant(z))}
     méchant => AdjMascR {\\P z. (P(z) & méchant(z))}
     noir => AdjMascR {\\P z. (P(z) & noir(z))}
+    qui => AdjFemR/VbIntransSF {\\P. P}
+    qui => AdjMascR/VbIntransSM {\\P. P}
+    qui => AdjFemPR/VbIntransPF {\\P. P}
+    qui => AdjMascPR/VbIntransPM {\\P. P}
 
+    # Superlatif
     très => AdjMascL/AdjMascL {\\P. P}
     très => AdjFemL/AdjFemL {\\P. P}
     très => AdjMascR/AdjMascR {\\P. P}
     très => AdjFemR/AdjFemR {\\P. P}
 
+    # Pronoms personnels
     Il => Phrase/VbIntransSM {\\P. P(masculin)}
     Elle => Phrase/VbIntransSF {\\P. P(feminin)}
 
+    # Verbes
     pourchasse => VbTransSF {\\P Q y x. (P(x) & Q(y) & pourchasser(y, x))}
     pourchasse => VbTransSM {\\P Q y x. (P(x) & Q(y) & pourchasser(y, x))}
     attrape => VbTransSF {\\P Q y x. (P(x) & Q(y) & attraper(y, x))}
@@ -91,24 +115,23 @@ grammar = '''
     souhaite => VbTransSF/VerbeInf {souhaite}
     que => (VbIntransSF\\(VbTransSF/VerbeInf))/Phrase {\\P Q x. P(x) & Q(x)}
     que => (VbIntransSM\\(VbTransSM/VerbeInf))/Phrase {\\P Q x. P(x) & Q(x)}
-
     est => VbIntransSF/AdjFemR {\\P. P}
     est => VbIntransSM/AdjMascL {\\P. P}
     est => VbIntransSF/AdjFemL {\\P. P}
     est => VbIntransSM/AdjMascR {\\P. P}
-
     est => VbIntransSF/PP {\\P. P}
     est => VbIntransSM/PP {\\P. P}
     donné => PP[Masc] {\\x y z. donner(x, y, z)}
     mangée => PP[Fem] {\\P x y. (P(y) & manger(x, y))}
-
     donner => VerbeInf {donner}
 
+    # Adverbes
     paisiblement => AdvM {\\P R z. (P(R, z) & paisible(z))}
     paisiblement => AdvF {\\P R z. (P(R, z) & paisible(z))}
     paisiblement => AdvTM {\\P R z. (P(R, z) & paisible(z))}
     paisiblement => AdvTF {\\P R z. (P(R, z) & paisible(z))}
 
+    # Compléments
     à => ((VbIntransSM\\VbTransSM)\\GrNom)/GrNom {\\P Q x. Q(P, x)}
     à => ((VbIntransSF\\VbTransSF)\\GrNom)/GrNom {\\P Q x. Q(P, x)}
     à => (PP[Masc]\\PP[Masc])/GrNom {\\P Q x. Q(P, x)}
@@ -121,7 +144,10 @@ grammar = '''
     Avec => (PhraseInterro/Phrase)/GrNom[Question] {\\P Q x y. (exists z. (Q(P(x), y) & utilise(x, z)))}
     de => (GrNom[Masc]\\GrNom[Masc])/GrNom {\\P R x y. (P(y) & R(x) & possede(y, x))}
     de => (GrNom[Fem]\\GrNom[Fem])/GrNom {\\P R x y. (P(y) & R(x) & possede(y, x))}
+    par => (PP[Masc]\\PP[Masc])/GrNom {\\P Q R x y. (P(x) & Q(R, x, y))}
+    par => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R x y. (P(x) & Q(R, x, y))}
 
+    # Conjonctions
     et => (GrNom[MascPlur]/GrNom[Fem])\\GrNom[Masc] {\\P Q z. (P(z) & Q (z))}
     et => (GrNom[FemPlur]/GrNom[Fem])\\GrNom[Fem] {\\P Q z. (P(z) & Q (z))}
     et => (GrNom[MascPlur]/GrNom[Masc])\\GrNom[Masc] {\\P Q z. (P(z) & Q (z))}
@@ -136,27 +162,18 @@ grammar = '''
     et => (AdjMascR/AdjMascR)\\AdjMascR {\\P Q z. (P(z) & Q (z))}
     et => (Phrase/Phrase)\\Phrase {\\P Q z. (P(z) & Q (z))}
 
-    lui => AnteposMasc\\AnteposMasc {\\P. P}
-    lui => AnteposFem\\AnteposFem {\\P. P}
-    lui => ((Phrase/GrNom)/VbTransSM)\\GrNom {\\P. P}
-    lui => ((Phrase/GrNom)/VbTransSF)\\GrNom {\\P. P}
-
-    par => (PP[Masc]\\PP[Masc])/GrNom {\\P Q R x y. (P(x) & Q(R, x, y))}
-    par => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R x y. (P(x) & Q(R, x, y))}
-
+    # Phrases interrogatives
     Quel => (PhraseInterro/VbIntransSM)/Nom[Masc] {\\P R y.(exists x. (R(P, y, x)))}
     quel => GrNom[Question]/Nom[Masc] {quel}
     Quelle => (PhraseInterro/VbIntransSF)/Nom[Fem] {\\P R y.(exists x. (R(P, y, x)))}
     quelle => GrNom[Question]/Nom[Fem] {quel}
-    qui => AdjFemR/VbIntransSF {\\P. P}
-    qui => AdjMascR/VbIntransSM {\\P. P}
-    qui => AdjFemPR/VbIntransPF {\\P. P}
-    qui => AdjMascPR/VbIntransPM {\\P. P}
     Qui => PhraseInterro/VbIntransSM {\\P x y. P(humain, x, y)}
     Qui => PhraseInterro/VbIntransSF {\\x y z w. (z w) & (y (x w))}
     quoi => GrNom[Question] {\\P. P}
-
     ? => Phrase\\PhraseInterro {\\P.P}
+
+
+
 
     #Phrase -> GrNom, Phrase\\GrNom = 1.5
     #Phrase -> Phrase/VbIntransSF, VbIntransSF = 0.5
