@@ -155,29 +155,34 @@ class CKYDerivation:
         if not this.past:
             current_show = this.current.type.show()
             current_expr = this.current.expr.show()
-            current_sem = this.current.sem.show() if sem else ""
-
-            offset = abs((len(current_show) - len(current_expr))//2)
-            if len(current_show) > len(current_expr):
-                return offset*" " + current_expr + "\n" + current_show + current_sem, len(current_show) + len(current_sem)
+            if sem:
+                current_sem = this.current.sem.show()
+                offset = max(len(current_show), len(current_sem), len(current_expr))
+                return ((offset-len(current_expr))//2)*" " + current_expr + "\n" + ((offset-len(current_show))//2)*" " + current_show + "\n" + ((offset-len(current_sem))//2)*" " + current_sem, offset
             else:
-                return current_expr + "\n" + offset*" " + current_show + current_sem, len(current_expr) + len(current_sem)
+                offset = max(len(current_show), len(current_expr))
+                return ((offset-len(current_expr))//2)*" " + current_expr + "\n" + ((offset-len(current_show))//2)*" " + current_show, offset
 
         if len(this.past) == 1:
             current_show = this.current.type.show()
-            current_sem = this.current.sem.show() if sem else ""
-            lencurr = len(current_show) + len(current_sem)
             comb = this.combinator.name
             top, size = this.past[0].sub_show(sem)
-            offset = abs((size - lencurr)//2)
-            if size > lencurr:
-                return top + "\n" + size*"=" + comb + "\n" + offset*" " + current_show + current_sem, size
-            else:
+
+            if sem:
+                current_sem = this.current.sem.show()
+                offset = max(len(current_show), len(current_sem), size)
                 ntop = top.split("\n")
                 res = ""
                 for step in ntop:
-                    res += offset*" " + step + "\n"
-                return res + lencurr*"=" + comb + "\n" + current_show + current_sem, lencurr
+                    res += ((offset-size)//2)*" " + step + "\n"
+                return res + offset*"=" + comb + "\n" + ((offset-len(current_show))//2)*" "+ current_show + "\n"  + ((offset-len(current_sem))//2)*" " + current_sem, offset
+            else:
+                offset = max(len(current_show), size)
+                ntop = top.split("\n")
+                res = ""
+                for step in ntop:
+                    res += ((offset-size)//2)*" " + step + "\n"
+                return res + offset*"=" + comb + "\n" + ((offset-len(current_show))//2)*" "+ current_show, offset
 
         if len(this.past) == 2:
             topl, sizel = this.past[0].sub_show(sem)
@@ -186,12 +191,15 @@ class CKYDerivation:
             toplm = topl.split("\n")
             toprm = topr.split("\n")
             current_show = this.current.type.show()
-            current_sem = this.current.sem.show() if sem else ""
-            comb = this.combinator.name
-            currsize = len(current_show)+ len(current_sem)
-            offset = abs((totsize-currsize)//2)
 
-            s = offset if currsize > totsize else 0
+            comb = this.combinator.name
+            if sem:
+                current_sem = this.current.sem.show()
+                offset = max(len(current_show), len(current_sem), totsize)
+            else:
+                offset = max(len(current_show), totsize)
+
+            s = (offset-totsize)//2
             res = ""
             while len(toplm) > len(toprm):
                 v = toplm.pop(0)
@@ -205,10 +213,10 @@ class CKYDerivation:
                 vd = toprm.pop(0)
                 res += s*" " + vl + (sizel-len(vl)+3)*" " + vd + "\n"
 
-            if totsize > currsize:
-                return res + totsize*"=" + comb + "\n" + offset*" "+ current_show + current_sem, totsize
+            if sem:
+                return res + offset*"=" + comb + "\n" + ((offset-len(current_show))//2)*" "+ current_show + "\n" + ((offset-len(current_sem))//2)*" "+ current_sem, offset
             else:
-                return res + totsize*"=" + comb + "\n" + current_show + current_sem, currsize
+                return res + offset*"=" + comb + "\n" + ((offset-len(current_show))//2)*" "+ current_show, offset
 
     def show(this, sem=False):
         return this.sub_show(sem=sem)[0]
