@@ -11,7 +11,9 @@ def sel(idx, parse):
 
 Identifier = rd.rgx("[a-zA-Zéèêà_][a-zA-Zéèêà_0-9]*")
 Integer = rd.rgx("[0-9]+")
+Float = rd.act(rd.rgx("[0-9]+(\.[0-9]+)?"), lambda x: float(x))
 Spaces = rd.rgx("( |\t)+")
+DQuoString = rd.act(rd.rgx("\"([^\"]+)\""), lambda x: x[1:][:-1])
 
 
 ####################################
@@ -377,6 +379,33 @@ class Alias:
     def expand(this, key, value):
         return Alias(this.key, this.value.expand(key, value))
 
+################################################
+## Weight function
+################################################
+class Weight:
+    def __init__(this, combinatorName, premices, weight):
+        this.combinatorName = combinatorName
+        this.premices = premices
+        this.weight = weight
+    def match(this, combinator, sigma):
+        pass
+        #~ if len(this.premices) == len(premices):
+            #~ for (l, r) in zip(this.premices, premices):
+                #~ if not (l == r):
+
+
+WeightParser = rd.act(
+    rd.seq(
+        rd.str("Weight"),
+        rd.str("("),
+        DQuoString,
+        rd.lst1(rd.act(rd.seq(rd.str(","), CCGTypeParser), lambda x: x[1])),
+        rd.str(")"),
+        rd.str("="),
+        Float
+    ),
+    lambda x: Weight(x[2], x[3], x[6])
+)
 
 ################################################
 ## Grammar (Parser + Constructor + Printer)
@@ -394,8 +423,9 @@ class CCGrammar:
         rd.seq(rd.rgx("[^\s]+"), rd.str("=>"), weight, CCGTypeParser, rd.mbe(lmbda)),
         lambda x: {"judgm": Judgement(CCGExprString(x[0]), x[3], weight = x[2], sem = x[4])}
     )
+    weightRule = rd.act(WeightParser, lambda x: {"weight": x})
     comment = rd.act(rd.seq(rd.str("#"), rd.rgx(".*")), lambda x: None)
-    grammar = sel(0, rd.seq(rd.lst(sel(1, rd.seq(newLines, rd.alt(comment, axioms, alias, judgm)))), newLines, rd.end()))
+    grammar = sel(0, rd.seq(rd.lst(sel(1, rd.seq(newLines, rd.alt(comment, axioms, alias, judgm, weightRule)))), newLines, rd.end()))
 
     @classmethod
     def parse(self, str):
@@ -408,6 +438,7 @@ class CCGrammar:
         this.axioms = {}
         this.aliases = {}
         this.rules = {}
+        this.weights = {}
         this.terminal = None
         for stmt in this.parse(strGram):
             if stmt is None:
@@ -424,6 +455,11 @@ class CCGrammar:
                 if stmt["judgm"].expr.str not in this.rules:
                     this.rules[stmt["judgm"].expr.str] = []
                 this.rules[stmt["judgm"].expr.str].append(stmt["judgm"])
+            elif "weight" in stmt:
+                cbn = stmt["weight"].combinatorName
+                if cbn not in this.weights:
+                    this.weights[cbn] = []
+                this.weights[cbn].append(stmt["weight"])
 
         for (alk, alv) in this.aliases.items():
             for (elk, elv) in this.aliases.items():

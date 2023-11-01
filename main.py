@@ -174,13 +174,13 @@ grammar = '''
 
 
 
-
-    #Phrase -> GrNom, Phrase\\GrNom = 1.5
-    #Phrase -> Phrase/VbIntransSF, VbIntransSF = 0.5
-    #Phrase -> Phrase/VbIntransSM, VbIntransSM = 0.5
-    #Phrase -> PhraseInterro, Phrase\\PhraseInterro = 1.0
-    #GrNom -> GrNom/Nom, Nom = 2.0
-    #GrNom -> GrNom, GrNom\\GrNom = 0.8
+    Weight("<", GrNom, Phrase\\GrNom) = 1.5
+    Weight("<", GrNom, Phrase\\GrNom) = 1.5
+    Weight(">", Phrase/VbIntransSF, VbIntransSF) = 0.5
+    Weight(">", Phrase/VbIntransSM, VbIntransSM) = 0.5
+    Weight("<", PhraseInterro, Phrase\\PhraseInterro) = 1.0
+    Weight(">", GrNom/Nom, Nom) = 2.0
+    Weight("<", GrNom, GrNom\\GrNom) = 0.8
 
 
 '''
