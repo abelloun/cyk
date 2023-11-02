@@ -1,16 +1,5 @@
 # Combinatory Categorial Grammar Parser using CKY
 ***
-    - Une description générale du système ou du projet.
-    - Le statut du projet, qui est surtout utile lorsqu’il est encore en stade du développement. Évoquez les modifications prévues et l’objectif du développement ou signalez clairement que le développement du projet est terminé.
-    - Les exigences concernant l’environnement de développement en vue de son intégration.
-    - Une instruction pour l’installation et l’utilisation.
-    - Une liste des technologies utilisées et, le cas échéant, des liens vers d’autres informations sur ces technologies.
-    - Les projets open source que les développeurs modifient ou complètent par eux-mêmes doivent être complétés par un paragraphe « collaboration souhaitée » dans leur fichier readme.md. Comment contourner un problème ? Comment les développeurs doivent-ils appliquer les modifications ?
-    - Bugs connus et corrections éventuelles apportées.
-    - Section FAQ reprenant toutes les questions posées jusqu’à présent.
-    - Droits d’auteurs et informations sur la licence.
-
-
 ## Table of Contents
 1. [General Informations](#general-info)
 2. [Status, Roadmap, Objectives](#status)
@@ -48,12 +37,12 @@ mad => N[Masc]/N[Masc]
 Our implementation allows application and combination rules, and it is also possible to activate the type raising by setting `use_typer` as `True` in the parser. *(The type raising only operates on primitive types)*
 
 *Example :*\
-![Derivation example of the sentence 'The cat sleeps calmly'.](/image/derivexample "Derivation example of the sentence 'The cat sleeps calmly'.")
+![Derivation example of the sentence 'The cat sleeps calmly'.](/image/derivexample.png "Derivation example of the sentence 'The cat sleeps calmly'.")
 
 The CKY algorithm has been adapted for CCG to efficiently parse sentences and provide syntactic and semantic analysis. When constructing the parsing trees, we keep track of the ancestors of each judgement, and reconstruct them at the end using backpointing. This is useful because several different derivations can lead to the same type in one node of the tree, particularly if type raising is used.
 
 It is possible to annotate a word with semantics, which will be taken into account when displayed if the `sem` parameter is set to `True`.\
-![Derivation example of the sentence 'The cat sleeps calmly'.](/image/derivexamplesem "Derivation example of the sentence 'The cat sleeps calmly'.")
+![Derivation example of the sentence 'The cat sleeps calmly'.](/image/derivexamplesem.png "Derivation example of the sentence 'The cat sleeps calmly'.")
 
 ***
 ### Status, Roadmap, Objectives
@@ -102,7 +91,7 @@ Contributions are welcome, but we don't yet have a guideline for this, so please
 - Why not use nltk ?
 
 We have decided not to use the nltk library, which contains bugs. Here is an example of a derivation which should not be allowed.\
-![Wrong nltk derivation.](/image/wrongnltk "Wrong nltk derivation.")\
+![Wrong nltk derivation.](/image/wrongnltk.png "Wrong nltk derivation.")\
 Some derivations are also forgotten.
 ***
 ### License
