@@ -1,7 +1,6 @@
 from RDParser import RDParser as rd
 from CCGrammar import Judgement, CCGExprVar, CCGTypeVar, CCGTypeAtomicVar, CCGTypeAtomic, CCGTypeComposite, CCGExprConcat, LambdaTermApplication, LambdaTermLambda, LambdaTermVar
 from functools import reduce
-from collections import defaultdict
 ####################################
 ## Inference Class
 ####################################

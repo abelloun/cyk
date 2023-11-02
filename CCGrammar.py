@@ -60,7 +60,7 @@ class CCGExprConcat(CCGExpr):
     def __len__(this):
         return len(this.left) + len(this.right)
     def show(this):
-        return f"{this.left.show()} {this.right.show()}"
+        return f"{this.left.show()[:-1]} {this.right.show()[1:]}"
     def replace(this, sigma):
         return CCGExprConcat(this.left.replace(sigma), this.right.replace(sigma))
     def match(this, data, sigma):
@@ -78,6 +78,11 @@ class CCGType:
     def fresh(self, var):
         self.count += 1
         return f"{var.split('_')[0]}_{self.count}"
+
+    @classmethod
+    def reset(self):
+        self.count = -1
+
     @classmethod
     def unify(self, left, right, sigma):
         match (left, right):
@@ -222,7 +227,9 @@ class LambdaTerm:
     def fresh(self, var):
         self.count += 1
         return f"{var.split('_')[0]}_{self.count}"
-
+    @classmethod
+    def reset(self):
+        self.count = -1
 
 class LambdaTermVar(LambdaTerm):
     def __init__(this, name):
@@ -280,6 +287,11 @@ class LambdaTermApplication(LambdaTerm):
     def applyPredicate(this, args):
         return LambdaTermPredicate(this, args)
 
+def show_compact(lamb):
+    if isinstance(lamb, LambdaTermLambda):
+        return ", " + str(lamb.var) + show_compact(lamb.body)
+    else:
+        return ". " + lamb.show()
 
 class LambdaTermLambda(LambdaTerm):
     @classmethod
@@ -289,11 +301,12 @@ class LambdaTermLambda(LambdaTerm):
         this.var = var
         this.body = body
     def show(this):
-        return f"(\\{this.var}. {this.body.show()})"
+        return f"(\\{show_compact(this)[2:]})"
     def eval(this, env):
         v = this.fresh(this.var)
         return LambdaTermLambda(v, this.body.eval({**env, this.var: LambdaTermVar(v)}))
     def apply(this, arg):
+        this.reset()
         return this.body.eval({this.var: arg})
     def applyPredicate(this, args):
         f = this.body.eval({this.var: args[0]})

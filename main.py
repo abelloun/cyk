@@ -261,8 +261,8 @@ def run(txt):
         cpt_n = 0
         if parses:
             for p in parses:
-                print(p.current.expr.show(), p.current.sem.show(), "\n")
-                #print(p.show(sem=True))
+                #print(p.current.expr.show(), p.current.sem.show(), "\n")
+                print(p.show(sem=True))
                 #print("FIN DU PARSE\n")
                 cpt_n += 1
                 break
@@ -277,7 +277,7 @@ txt0 = '''Le chat qui dort est noir
 '''
 
 #run(txt)
-run(txt_test)
+run(txt)
 
 
 
