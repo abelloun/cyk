@@ -44,7 +44,7 @@ grammar = '''
     #  Reconnaissance des mots  #
     #############################
     # Noms
-    chat => Nom[Masc] {chat}                                       
+    chat => Nom[Masc] {chat}
     fromage => Nom[Masc] {fromage}
     rat => Nom[Masc] {rat}
     voisin => Nom[Masc] {voisin}
@@ -58,10 +58,10 @@ grammar = '''
     le => DetMasc  {\\P R x. P(x) & R(x)}
     La => DetFem  {\\P R x. P(x) & R(x)}
     Le => DetMasc   {\\P R x. P(x) & R(x)}
-    ma => DetFem  {\\P R x. P(x) & R(x)}
-    mon => DetMasc  {\\P R x. P(x) & R(x)}
-    mes => DetMascPlur  {\\P R x. P(x) & R(x)}
-    mes => DetFemPlur  {\\P R x. P(x) & R(x)}
+    ma => DetFem  {\\P R x. P(x) & possede(moi, x) & R(x)}
+    mon => DetMasc  {\\P R x. P(x) & possede(moi, x) & R(x)}
+    mes => DetMascPlur  {\\P R x. P(x) & possede(moi, x) & R(x)}
+    mes => DetFemPlur  {\\P R x. P(x) & possede(moi, x) & R(x)}
     ses => DetMascPlur  {\\P R x. P(x) & R(x)}
     ses => DetFemPlur  {\\P R x. P(x) & R(x)}
     un => DetMasc   {\\P R. exists x. P(x) & R(x)}
@@ -84,7 +84,7 @@ grammar = '''
     qui => (GrNom[FemPlur]\\GrNom[FemPlur])/VbIntransPF {\\P Q R. P(Q, R)}
     qui => (GrNom[MascPlur]\\GrNom[MascPlur])/VbIntransPM {\\P Q R. P(Q, R)}
     donné => PP[Masc] {\\P x y z. donne(x, y, z) & P(y, z)}
-    mangée => PP[Fem] {\\P x y z. mange(x, y, z) & P(y)}
+    mangée => PP[Fem] {\\P x y. mange(x, y) & P(y)}
 
     # Superlatif
     très => AdjMascL/AdjMascL {\\P. P}
@@ -111,10 +111,10 @@ grammar = '''
     dort => VbIntransSF {\\P R. P(R & dort)}
     donne => VbTransSM {\\P Q R x. P(donne(x)) & Q(R, x)}
     donne => VbTransSF {\\P Q R x. P(donne(x)) & Q(R, x)}
-    souhaite => VbTransSM/VerbeInf {souhaite}
-    souhaite => VbTransSF/VerbeInf {souhaite}
-    que => (VbIntransSF\\(VbTransSF/VerbeInf))/Phrase {\\P Q x. P(x) & Q(x)}
-    que => (VbIntransSM\\(VbTransSM/VerbeInf))/Phrase {\\P Q x. P(x) & Q(x)}
+    souhaite => VbTransSM/VerbeInf {\\P Q R x. P(souhaite(x)) & Q(R, x)}
+    souhaite => VbTransSF/VerbeInf {\\P Q R x. P(souhaite(x)) & Q(R, x)}
+    que => (VbIntransSF\\(VbTransSF/VerbeInf))/Phrase {\\P Q. Q(\\S. S(P))}
+    que => (VbIntransSM\\(VbTransSM/VerbeInf))/Phrase {\\P Q. Q(\\S. S(P))}
     est => VbIntransSF/AdjFemR {\\P Q R. Q(P(R))}
     est => VbIntransSM/AdjMascL {\\P Q R. Q(P(R))}
     est => VbIntransSF/AdjFemL {\\P Q R. Q(P(R))}
@@ -140,8 +140,8 @@ grammar = '''
 
     avec => AdvF/GrNom {\\P S Q R x z. P(utilise(z), x) & S(Q, R, z) }
     avec => AdvM/GrNom {\\P S Q R x z. P(utilise(z), x) & S(Q, R, z) }
-    de => (GrNom[Masc]\\GrNom[Masc])/GrNom {\\P Q S y x. P(appartient(y) & (\\z. Q(S, y)), x)}
-    de => (GrNom[Fem]\\GrNom[Fem])/GrNom {\\P Q S y x. P(appartient(y) & (\\z. Q(S, y)), x)}
+    de => (GrNom[Masc]\\GrNom[Masc])/GrNom {\\P Q S x y. P(appartient(x) & (\\z. Q(S, x)), y)}
+    de => (GrNom[Fem]\\GrNom[Fem])/GrNom {\\P Q S x y. P(appartient(x) & (\\z. Q(S, x)), y)}
     par => (PP[Masc]\\PP[Masc])/GrNom {\\Q R P x y. Q((\\u. R(P,u,y)), x)}
     par => (PP[Fem]\\PP[Fem])/GrNom {\\Q R P x y. Q((\\u. R(P,u,y)), x)}
 
@@ -164,12 +164,12 @@ grammar = '''
     et => (Phrase/Phrase)\\Phrase {\\P Q R. (P(R) & Q(R))}
 
     # Phrases interrogatives
-    Quel => ((Phrase/Ponct[Interro])/VbIntransSM)/Nom[Masc] {\\P Q R. (exists x. Q((\\z. P), R, x) & R(x))}
-    quel => GrNom[Question]/Nom[Masc] {\\P R x. P(x) & R(x) & inconnu(x)}
-    Quelle => ((Phrase/Ponct[Interro])/VbIntransSF)/Nom[Fem] {\\P Q R. (exists x. Q((\\z. P), R, x) & R(x))}
-    quelle => GrNom[Question]/Nom[Fem] {\\P R x. P(x) & R(x) & inconnu(x)}
-    Qui => (Phrase/Ponct[Interro])/VbIntransSM {\\Q R. (exists x. Q((\\z. (\\x. humain(x))), R, x) & R(x))}
-    Qui => (Phrase/Ponct[Interro])/VbIntransSF {\\Q R. (exists x. Q((\\z. (\\x. humain(x))), R, x) & R(x))}
+    Quel => ((Phrase/Ponct[Interro])/VbIntransSM)/Nom[Masc] {\\P Q R. (Q((\\S. exists x. S(x) & P(x)), R))}
+    quel => GrNom[Question]/Nom[Masc] {\\P Q R. (Q((\\S. exists x. S(x) & P(x)), R))}
+    Quelle => ((Phrase/Ponct[Interro])/VbIntransSF)/Nom[Fem] {\\P Q R. (Q((\\S. exists x. S(x) & P(x)), R))}
+    quelle => GrNom[Question]/Nom[Fem] {\\P Q R. (Q((\\S. exists x. S(x) & P(x)), R))}
+    Qui => (Phrase/Ponct[Interro])/VbIntransSM {\\Q R. (Q((\\S. exists x. S(x) & humain(x)), R))}
+    Qui => (Phrase/Ponct[Interro])/VbIntransSF {\\Q R. (Q((\\S. exists x. S(x) & humain(x)), R))}
     quoi => GrNom[Question] {\\R x. objet(x) & R(x)}
     Avec => ((Phrase/Ponct[Interro])/Phrase)/GrNom[Question] {\\P S R x z. P(R, x) & S(\\s. utilise(s, x), z) }
     A => ((Phrase/Ponct[Interro])/Phrase)/GrNom[Question] {\\P. P}
@@ -239,29 +239,14 @@ txt = '''
 '''
 
 txt_test='''
-    Un chat dort
-    Il dort
-    Le chat dort paisiblement
-    Le chat noir dort
-    Le méchant chat dort
-    Le très méchant chat dort
-    Le chat de la sœur de mon voisin dort
-    Le chat que mon voisin lui donne mange
-    Le chat qui dort est noir
-    Le chat mange la souris
-    Le chat la mange
-    Il la mange
-    Quel chat mange la souris ?
-    Qui mange la souris ?
-    Quelle souris mange le chat ?
-    La souris est mangée par le chat
-    Elle est mangée par le chat
-    Quelle souris est mangée par le chat ?
-    Le chat mange la souris avec ses dents
-    Le chat la mange avec ses dents
-    Avec quoi le chat mange la souris ?
-    Le rat donne un fromage à la souris
-    Un fromage est donné par le rat à la souris
+    La souris est mangée par mon voisin avec ses dents
+    Le fromage mange avec ses souris
+    Le méchant chat noir est noir et méchant
+    Le rat mange ses dents avec ses dents
+    La souris est mangée
+    La souris est mangée par ses dents
+    La souris mange un rat paisiblement
+    La souris mange paisiblement paisiblement un rat
 '''
 
 def run(txt):
@@ -276,10 +261,12 @@ def run(txt):
         cpt_n = 0
         if parses:
             for p in parses:
-                print(p.show(sem=True))
-                print("FIN DU PARSE\n")
+                print(p.current.expr.show(), p.current.sem.show(), "\n")
+                #print(p.show(sem=True))
+                #print("FIN DU PARSE\n")
                 cpt_n += 1
-            print(cpt_n, str)
+                break
+            #print(cpt_n, str)
         else:
             print(f"@@@@@@@@@@@@ FAIL on ::: {str} @@@@@@@@@@@@\n")
         cpt += cpt_n
@@ -290,4 +277,70 @@ txt0 = '''Le chat qui dort est noir
 '''
 
 #run(txt)
-run(txt)
+run(txt_test)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+'''
+    TRES BIEN Un chat dort
+    TRES BIEN Il dort
+    TRES BIEN Le chat dort paisiblement
+    TRES BIEN Le chat noir dort
+    TRES BIEN Le méchant chat dort
+    BIEN Le très méchant chat dort
+    TRES BIEN Le chat de la sœur de mon voisin dort
+    PAS OK Le chat que mon voisin lui donne mange
+    TRES BIEN Le chat qui dort est noir
+    TRES BIEN Le chat mange la souris
+    TRES BIEN Le chat la mange
+    TRES BIEN Il la mange
+    TRES BIEN Quel chat mange la souris ?
+    TRES BIEN Qui mange la souris ?
+    TRES BIEN (phrase ambigüe) Quelle souris mange le chat ?
+    TRES BIEN La souris est mangée par le chat
+    TRES BIEN Elle est mangée par le chat
+    TRES BIEN Quelle souris est mangée par le chat ?
+    TRES BIEN Le chat mange la souris avec ses dents
+    TRES BIEN Le chat la mange avec ses dents
+    TRES BIEN Avec quoi le chat mange la souris ?
+    MOYEN Le rat donne un fromage à la souris
+    MOYEN Un fromage est donné par le rat à la souris
+    FAUX/MAUVAIS A quelle souris un fromage est donné par le rat ?
+    MOYEN Il le donne à la souris
+    FAUX/MAUVAIS Il le lui donne
+    CORRECT ? Il souhaite que mon voisin lui donne le chat
+    FAUX/MAUVAIS Il souhaite donner le chat à mon voisin
+    BIEN Le chat de mon voisin pourchasse et attrape la souris
+    TRES BIEN La souris dort et le chat de mon voisin attrape la souris
+    TRES BIEN Le chat dort et la souris dort
+    TRES BIEN Le chat et la souris dorment
+    TRES BIEN le chat mange la souris et le fromage
+    TRES BIEN la souris de mon chat et le fromage dorment
+    TRES BIEN un fromage très méchant mange le fromage
+    TRES BIEN le voisin de mon chat mange mon voisin
+    TRES BIEN Le chat mange mon fromage avec la souris
+    BIEN Le méchant chat attrape et mange la souris paisiblement
+    TRES BIEN Le chat est méchant
+    TRES BIEN La souris est mangée par mon voisin
+    TRES BIEN La souris est mangée par mon voisin avec ses dents
+    MOYEN Le fromage mange avec ses souris
+    TRES BIEN Le méchant chat noir est noir et méchant
+    TRES BIEN Le rat mange ses dents avec ses dents
+    TRES BIEN La souris est mangée
+    TRES BIEN La souris est mangée par ses dents
+    TRES BIEN La souris mange un rat paisiblement
+    MAUVAIS La souris mange paisiblement paisiblement un rat
+'''
