@@ -4,7 +4,7 @@ import time
 
 grammar = '''
     :- Phrase, GrNom, Nom
-    :- VerbeInf, PhraseInterro, PP
+    :- VerbeInf, Ponct, PP
 
     # Déterminants
     DetMasc :: GrNom[Masc]/Nom[Masc]
@@ -44,47 +44,47 @@ grammar = '''
     #  Reconnaissance des mots  #
     #############################
     # Noms
-    chat => Nom[Masc] {\\x. chat(x)}
-    fromage => Nom[Masc] {\\x. fromage(x)}
-    rat => Nom[Masc] {\\x. rat(x)}
-    voisin => Nom[Masc] {\\x. voisin(x)}
-    sœur => Nom[Fem] {\\x. soeur(x)}
-    souris => Nom[Fem] {\\x. souris(x)}
-    souris => Nom[FemPlur] {\\x. souris(x)}
-    dents => Nom[FemPlur] {\\x. dents(x)}
+    chat => Nom[Masc] {chat}                                       
+    fromage => Nom[Masc] {fromage}
+    rat => Nom[Masc] {rat}
+    voisin => Nom[Masc] {voisin}
+    sœur => Nom[Fem] {soeur}
+    souris => Nom[Fem] {souris}
+    souris => Nom[FemPlur] {souris}
+    dents => Nom[FemPlur] {dents}
 
     # Déterminants
-    la => DetFem {\\P. P}
-    le => DetMasc  {\\P. P}
-    La => DetFem  {\\P. P}
-    Le => DetMasc   {\\P. P}
-    ma => DetFem  {\\P. P}
-    mon => DetMasc  {\\P. P}
-    mes => DetMascPlur  {\\P. P}
-    mes => DetFemPlur  {\\P. P}
-    ses => DetMascPlur  {\\P. P}
-    ses => DetFemPlur  {\\P. P}
-    un => DetMasc   {\\P. P}
-    Un => DetMasc   {\\P. P}
+    la => DetFem {\\P R x. P(x) & R(x)}
+    le => DetMasc  {\\P R x. P(x) & R(x)}
+    La => DetFem  {\\P R x. P(x) & R(x)}
+    Le => DetMasc   {\\P R x. P(x) & R(x)}
+    ma => DetFem  {\\P R x. P(x) & R(x)}
+    mon => DetMasc  {\\P R x. P(x) & R(x)}
+    mes => DetMascPlur  {\\P R x. P(x) & R(x)}
+    mes => DetFemPlur  {\\P R x. P(x) & R(x)}
+    ses => DetMascPlur  {\\P R x. P(x) & R(x)}
+    ses => DetFemPlur  {\\P R x. P(x) & R(x)}
+    un => DetMasc   {\\P R. exists x. P(x) & R(x)}
+    Un => DetMasc   {\\P R. exists x. P(x) & R(x)}
 
     # Antépositions
-    la => AnteposMasc {\\P. P(feminin)}
-    le => AnteposMasc {\\P. P(masculin)}
-    la => AnteposFem {\\P. P(feminin)}
-    le => AnteposFem {\\P. P(masculin)}
-    lui => AnteposMasc\\AnteposMasc {\\P. P} # Antéposition secondaire
-    lui => AnteposFem\\AnteposFem {\\P. P}
-    lui => ((Phrase/GrNom)/VbTransSM)\\GrNom {\\P. P}
-    lui => ((Phrase/GrNom)/VbTransSF)\\GrNom {\\P. P}
+    la => AnteposMasc {\\P. P(\\R x. (féminin(x) & R(x)))}
+    le => AnteposMasc {\\P. P(\\R x. (masculin(x) & R(x)))}
+    la => AnteposFem {\\P. P(\\R x. (féminin(x) & R(x)))}
+    le => AnteposFem {\\P. P(\\R x. (masculin(x) & R(x)))}
+    lui => VbTransSM/VbTransSM {\\P S Q R x z. P(\\T. S(T & (\\u. masculin(x))), Q, R, z)}
+    lui => VbTransSF/VbTransSF {\\P S Q R x z. P(\\T. S(T & (\\u. masculin(x))), Q, R, z)}
 
     # Adjectifs
-    méchant => AdjMascL {\\P z. (P(z) & méchant(z))}
-    méchant => AdjMascR {\\P z. (P(z) & méchant(z))}
-    noir => AdjMascR {\\P z. (P(z) & noir(z))}
-    qui => AdjFemR/VbIntransSF {\\P. P}
-    qui => AdjMascR/VbIntransSM {\\P. P}
-    qui => AdjFemPR/VbIntransPF {\\P. P}
-    qui => AdjMascPR/VbIntransPM {\\P. P}
+    méchant => AdjMascL {\\P. P & méchant}
+    méchant => AdjMascR {\\P. P & méchant}
+    noir => AdjMascR {\\P. P & noir}
+    qui => (GrNom[Fem]\\GrNom[Fem])/VbIntransSF {\\P Q R. P(Q, R)}
+    qui => (GrNom[Masc]\\GrNom[Masc])/VbIntransSM {\\P Q R. P(Q, R)}
+    qui => (GrNom[FemPlur]\\GrNom[FemPlur])/VbIntransPF {\\P Q R. P(Q, R)}
+    qui => (GrNom[MascPlur]\\GrNom[MascPlur])/VbIntransPM {\\P Q R. P(Q, R)}
+    donné => PP[Masc] {\\P x y z. donne(x, y, z) & P(y, z)}
+    mangée => PP[Fem] {\\P x y z. mange(x, y, z) & P(y)}
 
     # Superlatif
     très => AdjMascL/AdjMascL {\\P. P}
@@ -93,85 +93,87 @@ grammar = '''
     très => AdjFemR/AdjFemR {\\P. P}
 
     # Pronoms personnels
-    Il => Phrase/VbIntransSM {\\P. P(masculin)}
-    Elle => Phrase/VbIntransSF {\\P. P(feminin)}
-
+    Il => Phrase/VbIntransSM {\\P. P(\\R x. masculin(x) & R(x))}
+    Elle => Phrase/VbIntransSF {\\P. P(\\R x. féminin(x) & R(x))}
     # Verbes
-    pourchasse => VbTransSF {\\P Q y x. (P(x) & Q(y) & pourchasser(y, x))}
-    pourchasse => VbTransSM {\\P Q y x. (P(x) & Q(y) & pourchasser(y, x))}
-    attrape => VbTransSF {\\P Q y x. (P(x) & Q(y) & attraper(y, x))}
-    attrape => VbTransSM {\\P Q y x. (P(x) & Q(y) & attraper(y, x))}
-    mange => VbTransSF {\\P Q y x. (P(x) & Q(y) & manger(y, x))}
-    mange => VbTransSM {\\P Q y x. (P(x) & Q(y) & manger(y, x))}
-    mange => VbIntransSM {\\x. manger(x)}
-    mange => VbIntransSF {\\x. manger(x)}
-    dorment => VbIntransPM {\\P x. (P(x) & dormir(x))}
-    dorment => VbIntransPF {\\P x. (P(x) & dormir(x))}
-    dort => VbIntransSM {\\P x. (P(x) & dormir(x))}
-    dort => VbIntransSF {\\P x. (P(x) & dormir(x))}
-    donne => VbTransSM {\\P Q S y x z. (P(x) & Q(y) & S(z) & donner(z, x, y))}
-    donne => VbTransSF {\\P Q S y x z. (P(x) & Q(y) & S(z) & donner(z, x, y))}
+    pourchasse => VbTransSF {\\P Q R x. P(pourchasse(x)) & Q(R, x)}
+    pourchasse => VbTransSM {\\P Q R x. P(pourchasse(x)) & Q(R, x)}
+    attrape => VbTransSF {\\P Q R x. P(attrape(x)) & Q(R, x)}
+    attrape => VbTransSM {\\P Q R x. P(attrape(x)) & Q(R, x)}
+    mange => VbTransSF {\\P Q R x. P(mange(x)) & Q(R, x)}
+    mange => VbTransSM {\\P Q R x. P(mange(x)) & Q(R, x)}
+
+    mange => VbIntransSF {\\P R. P(R & mange)}
+    mange => VbIntransSM {\\P R. P(R & mange)}
+    dorment => VbIntransPM {\\P R. P(R & dort)}
+    dorment => VbIntransPF {\\P R. P(R & dort)}
+    dort => VbIntransSM {\\P R. P(R & dort)}
+    dort => VbIntransSF {\\P R. P(R & dort)}
+    donne => VbTransSM {\\P Q R x. P(donne(x)) & Q(R, x)}
+    donne => VbTransSF {\\P Q R x. P(donne(x)) & Q(R, x)}
     souhaite => VbTransSM/VerbeInf {souhaite}
     souhaite => VbTransSF/VerbeInf {souhaite}
     que => (VbIntransSF\\(VbTransSF/VerbeInf))/Phrase {\\P Q x. P(x) & Q(x)}
     que => (VbIntransSM\\(VbTransSM/VerbeInf))/Phrase {\\P Q x. P(x) & Q(x)}
-    est => VbIntransSF/AdjFemR {\\P. P}
-    est => VbIntransSM/AdjMascL {\\P. P}
-    est => VbIntransSF/AdjFemL {\\P. P}
-    est => VbIntransSM/AdjMascR {\\P. P}
-    est => VbIntransSF/PP {\\P. P}
-    est => VbIntransSM/PP {\\P. P}
-    donné => PP[Masc] {\\x y z. donner(x, y, z)}
-    mangée => PP[Fem] {\\P x y. (P(y) & manger(x, y))}
+    est => VbIntransSF/AdjFemR {\\P Q R. Q(P(R))}
+    est => VbIntransSM/AdjMascL {\\P Q R. Q(P(R))}
+    est => VbIntransSF/AdjFemL {\\P Q R. Q(P(R))}
+    est => VbIntransSM/AdjMascR {\\P Q R. Q(P(R))}
+    est => VbIntransSF/PP {\\P Q R. P(Q(R))}
+    est => VbIntransSM/PP {\\P Q R. P(Q(R))}
     donner => VerbeInf {donner}
 
     # Adverbes
-    paisiblement => AdvM {\\P R z. (P(R, z) & paisible(z))}
-    paisiblement => AdvF {\\P R z. (P(R, z) & paisible(z))}
-    paisiblement => AdvTM {\\P R z. (P(R, z) & paisible(z))}
-    paisiblement => AdvTF {\\P R z. (P(R, z) & paisible(z))}
+    paisiblement => AdvM {\\P S R. P(S, paisible & R)}
+    paisiblement => AdvF {\\P S R. P(S, paisible & R)}
+    paisiblement => AdvTM {\\P S R. P(S, paisible & R)}
+    paisiblement => AdvTF {\\P S R. P(S, paisible & R)}
 
     # Compléments
-    à => ((VbIntransSM\\VbTransSM)\\GrNom)/GrNom {\\P Q x. Q(P, x)}
-    à => ((VbIntransSF\\VbTransSF)\\GrNom)/GrNom {\\P Q x. Q(P, x)}
-    à => (PP[Masc]\\PP[Masc])/GrNom {\\P Q x. Q(P, x)}
-    à => (PP[Fem]\\PP[Fem])/GrNom {à}
-    à => (VbTransSM\\AnteposMasc)\\VbTransSM {à}
-    à => (VbTransSF\\AnteposFem)\\VbTransSF {à}
-    A => (PhraseInterro/Phrase)/GrNom[Question] {à}
-    avec => (VbIntransSF\\VbIntransSF)/GrNom  {avec}
-    avec => (VbIntransSM\\VbIntransSM)/GrNom {\\P Q S x y z. (P(x) & Q(S, z, y) & utilise(z, x))}
-    Avec => (PhraseInterro/Phrase)/GrNom[Question] {\\P Q x y. (exists z. (Q(P(x), y) & utilise(x, z)))}
-    de => (GrNom[Masc]\\GrNom[Masc])/GrNom {\\P R x y. (P(y) & R(x) & possede(y, x))}
-    de => (GrNom[Fem]\\GrNom[Fem])/GrNom {\\P R x y. (P(y) & R(x) & possede(y, x))}
-    par => (PP[Masc]\\PP[Masc])/GrNom {\\P Q R x y. (P(x) & Q(R, x, y))}
-    par => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R x y. (P(x) & Q(R, x, y))}
+    à => (VbTransSM\\VbTransSM)\\GrNom {\\P Q S T R. S(\\z. P(Q(\\U. T(U(z) & R), transfert, z)))}
+    à => (VbTransSF\\VbTransSF)\\GrNom  {\\P Q S T R. S(\\z. P(Q(\\U. T(U(z) & R), transfert, z)))}
+
+    à => (PP[Masc]\\PP[Masc])/GrNom {\\P Q R z. P(Q(\\s. R, z))}
+    à => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R z. P(Q(\\s. R, z))}
+    à => (VbTransSM\\AnteposMasc)\\VbTransSM {\\P Q S T R. S(\\z. Q(\\M.M, P(\\U. T(U(z) & R), transfert, z)))}
+    à => (VbTransSF\\AnteposFem)\\VbTransSF {\\P Q S T R. S(\\z. Q(\\M.M, P(\\U. T(U(z) & R), transfert, z)))}
+
+    avec => AdvF/GrNom {\\P S Q R x z. P(utilise(z), x) & S(Q, R, z) }
+    avec => AdvM/GrNom {\\P S Q R x z. P(utilise(z), x) & S(Q, R, z) }
+    de => (GrNom[Masc]\\GrNom[Masc])/GrNom {\\P Q S y x. P(appartient(y) & (\\z. Q(S, y)), x)}
+    de => (GrNom[Fem]\\GrNom[Fem])/GrNom {\\P Q S y x. P(appartient(y) & (\\z. Q(S, y)), x)}
+    par => (PP[Masc]\\PP[Masc])/GrNom {\\Q R P x y. Q((\\u. R(P,u,y)), x)}
+    par => (PP[Fem]\\PP[Fem])/GrNom {\\Q R P x y. Q((\\u. R(P,u,y)), x)}
 
     # Conjonctions
-    et => (GrNom[MascPlur]/GrNom[Fem])\\GrNom[Masc] {\\P Q z. (P(z) & Q (z))}
-    et => (GrNom[FemPlur]/GrNom[Fem])\\GrNom[Fem] {\\P Q z. (P(z) & Q (z))}
-    et => (GrNom[MascPlur]/GrNom[Masc])\\GrNom[Masc] {\\P Q z. (P(z) & Q (z))}
-    et => (GrNom[MascPlur]/GrNom[Masc])\\GrNom[Fem] {\\P Q z. (P(z) & Q (z))}
-    et => (VbTransSM/VbTransSM)\\VbTransSM {\\P Q z. (P(z) & Q (z))}
-    et => (VbTransSF/VbTransSF)\\VbTransSF {\\P Q z. (P(z) & Q (z))}
-    et => (VbIntransSF/VbIntransSF)\\VbIntransSF {\\P Q z. (P(z) & Q (z))}
-    et => (VbIntransSM/VbIntransSM)\\VbIntransSM {\\P Q z. (P(z) & Q (z))}
-    et => (AdjFemL/AdjFemL)\\AdjFemL {\\P Q z. (P(z) & Q (z))}
-    et => (AdjFemR/AdjFemR)\\AdjFemR {\\P Q z. (P(z) & Q (z))}
-    et => (AdjMascL/AdjMascL)\\AdjMascL {\\P Q z. (P(z) & Q (z))}
-    et => (AdjMascR/AdjMascR)\\AdjMascR {\\P Q z. (P(z) & Q (z))}
-    et => (Phrase/Phrase)\\Phrase {\\P Q z. (P(z) & Q (z))}
+    et => (GrNom[MascPlur]/GrNom[Fem])\\GrNom[Masc] {\\P Q R. (P(R) & Q(R))}
+    et => (GrNom[FemPlur]/GrNom[Fem])\\GrNom[Fem] {\\P Q R. (P(R) & Q(R))}
+    et => (GrNom[MascPlur]/GrNom[Masc])\\GrNom[Masc] {\\P Q R. (P(R) & Q(R))}
+    et => (GrNom[MascPlur]/GrNom[Masc])\\GrNom[Fem] {\\P Q R. (P(R) & Q(R))}
+    #et => (VbTransSM/VbTransSM)\\VbTransSM {\\P Q T N. P(\\S. S, Q(\\U. U, T))}
+    #et => (VbTransSF/VbTransSF)\\VbTransSF {\\P Q T N. P(\\S. S, Q(\\U. U, T))}
+
+    et => (VbTransSM/VbTransSM)\\VbTransSM {\\P Q R. (P(R) & Q(R))}
+    et => (VbTransSF/VbTransSF)\\VbTransSF {\\P Q R. (P(R) & Q(R))}
+    et => (VbIntransSF/VbIntransSF)\\VbIntransSF {\\P Q R. (P(R) & Q(R))}
+    et => (VbIntransSM/VbIntransSM)\\VbIntransSM {\\P Q R. (P(R) & Q(R))}
+    et => (AdjFemL/AdjFemL)\\AdjFemL {\\P Q R. (P(R) & Q(R))}
+    et => (AdjFemR/AdjFemR)\\AdjFemR {\\P Q R. (P(R) & Q(R))}
+    et => (AdjMascL/AdjMascL)\\AdjMascL {\\P Q R. (P(R) & Q(R))}
+    et => (AdjMascR/AdjMascR)\\AdjMascR {\\P Q R. (P(R) & Q(R))}
+    et => (Phrase/Phrase)\\Phrase {\\P Q R. (P(R) & Q(R))}
 
     # Phrases interrogatives
-    Quel => (PhraseInterro/VbIntransSM)/Nom[Masc] {\\P R y.(exists x. (R(P, y, x)))}
-    quel => GrNom[Question]/Nom[Masc] {quel}
-    Quelle => (PhraseInterro/VbIntransSF)/Nom[Fem] {\\P R y.(exists x. (R(P, y, x)))}
-    quelle => GrNom[Question]/Nom[Fem] {quel}
-    Qui => PhraseInterro/VbIntransSM {\\P x y. P(humain, x, y)}
-    Qui => PhraseInterro/VbIntransSF {\\x y z w. (z w) & (y (x w))}
-    quoi => GrNom[Question] {\\P. P}
-    ? => Phrase\\PhraseInterro {\\P.P}
-
+    Quel => ((Phrase/Ponct[Interro])/VbIntransSM)/Nom[Masc] {\\P Q R. (exists x. Q((\\z. P), R, x) & R(x))}
+    quel => GrNom[Question]/Nom[Masc] {\\P R x. P(x) & R(x) & inconnu(x)}
+    Quelle => ((Phrase/Ponct[Interro])/VbIntransSF)/Nom[Fem] {\\P Q R. (exists x. Q((\\z. P), R, x) & R(x))}
+    quelle => GrNom[Question]/Nom[Fem] {\\P R x. P(x) & R(x) & inconnu(x)}
+    Qui => (Phrase/Ponct[Interro])/VbIntransSM {\\Q R. (exists x. Q((\\z. (\\x. humain(x))), R, x) & R(x))}
+    Qui => (Phrase/Ponct[Interro])/VbIntransSF {\\Q R. (exists x. Q((\\z. (\\x. humain(x))), R, x) & R(x))}
+    quoi => GrNom[Question] {\\R x. objet(x) & R(x)}
+    Avec => ((Phrase/Ponct[Interro])/Phrase)/GrNom[Question] {\\P S R x z. P(R, x) & S(\\s. utilise(s, x), z) }
+    A => ((Phrase/Ponct[Interro])/Phrase)/GrNom[Question] {\\P. P}
+    ? => Ponct[Interro] {inconnu}
 
 
     Weight("<", GrNom, Phrase\\GrNom) = 1.5
