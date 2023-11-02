@@ -1,8 +1,23 @@
-from CCGrammar import CCGrammar
-from CCGCKYParser import CCGCKYParser, CKYDerivation
-import time
+"""
+CCG Parser Example
 
-grammar = '''
+This module demonstrates parsing text using Combinatory Categorial Grammar (CCG).
+It defines a CCG grammar and provides a function to parse a given text input
+using the defined grammar rules.
+The parsing results are displayed for each sentence, and the module measures the time taken for
+parsing and counts the total number of successful parses.
+
+To use this module, you can provide your own CCG grammar rules and sample text data.
+The `run` function parses the text using the specified grammar and displays the results.
+
+Example usage:
+run(TXT_SAMPLE, GRAMMAR)
+"""
+import time
+from CCGCKYParser import CCGCKYParser
+from CCGrammar import CCGrammar
+
+GRAMMAR = '''
     :- Phrase, GrNom, Nom
     :- VerbeInf, Ponct, PP
 
@@ -96,21 +111,20 @@ grammar = '''
     Il => Phrase/VbIntransSM {\\P. P(\\R x. masculin(x) & R(x))}
     Elle => Phrase/VbIntransSF {\\P. P(\\R x. féminin(x) & R(x))}
     # Verbes
-    pourchasse => VbTransSF {\\P Q R x. P(pourchasse(x)) & Q(R, x)}
-    pourchasse => VbTransSM {\\P Q R x. P(pourchasse(x)) & Q(R, x)}
-    attrape => VbTransSF {\\P Q R x. P(attrape(x)) & Q(R, x)}
-    attrape => VbTransSM {\\P Q R x. P(attrape(x)) & Q(R, x)}
-    mange => VbTransSF {\\P Q R x. P(mange(x)) & Q(R, x)}
-    mange => VbTransSM {\\P Q R x. P(mange(x)) & Q(R, x)}
-
+    pourchasse => VbTransSF {\\P Q R. Q(\\z. P(pourchasse(z) & (\\s. R(z))))}
+    pourchasse => VbTransSM {\\P Q R. Q(\\z. P(pourchasse(z) & (\\s. R(z))))}
+    attrape => VbTransSF {\\P Q R. Q(\\z. P(attrape(z) & (\\s. R(z))))}
+    attrape => VbTransSM {\\P Q R. Q(\\z. P(attrape(z) & (\\s. R(z))))}
+    mange => VbTransSF {\\P Q R. Q(\\z. P(mange(z) & (\\s. R(z))))}
+    mange => VbTransSM {\\P Q R. Q(\\z. P(mange(z) & (\\s. R(z))))}
     mange => VbIntransSF {\\P R. P(R & mange)}
     mange => VbIntransSM {\\P R. P(R & mange)}
     dorment => VbIntransPM {\\P R. P(R & dort)}
     dorment => VbIntransPF {\\P R. P(R & dort)}
     dort => VbIntransSM {\\P R. P(R & dort)}
     dort => VbIntransSF {\\P R. P(R & dort)}
-    donne => VbTransSM {\\P Q R x. P(donne(x)) & Q(R, x)}
-    donne => VbTransSF {\\P Q R x. P(donne(x)) & Q(R, x)}
+    donne => VbTransSM {\\P Q R. Q(\\z. P(donne(z) & (\\s. R(z))))}
+    donne => VbTransSF {\\P Q R. Q(\\z. P(donne(z) & (\\s. R(z))))}
     souhaite => VbTransSM/VerbeInf {\\P Q R x. P(souhaite(x)) & Q(R, x)}
     souhaite => VbTransSF/VerbeInf {\\P Q R x. P(souhaite(x)) & Q(R, x)}
     que => (VbIntransSF\\(VbTransSF/VerbeInf))/Phrase {\\P Q. Q(\\S. S(P))}
@@ -183,11 +197,9 @@ grammar = '''
     Weight("<", PhraseInterro, Phrase\\PhraseInterro) = 1.0
     Weight(">", GrNom/Nom, Nom) = 2.0
     Weight("<", GrNom, GrNom\\GrNom) = 0.8
-
-
 '''
 
-txt = '''
+TXT_SAMPLE = '''
     Un chat dort
     Il dort
     Le chat dort paisiblement
@@ -238,109 +250,56 @@ txt = '''
     La souris mange paisiblement paisiblement un rat
 '''
 
-txt_test='''
-    La souris est mangée par mon voisin avec ses dents
-    Le fromage mange avec ses souris
-    Le méchant chat noir est noir et méchant
-    Le rat mange ses dents avec ses dents
-    La souris est mangée
-    La souris est mangée par ses dents
-    La souris mange un rat paisiblement
-    La souris mange paisiblement paisiblement un rat
+TXT_TEST='''
+Un chat mange la souris
 '''
+def run(txt, grammar):
+    """
+    Parse a text input using Combinatory Categorial Grammar (CCG).
 
-def run(txt):
+    Args:
+    - txt (str): A string containing one or more sentences separated by newline
+    characters.
+
+    This function parses the input text using Combinatory Categorial Grammar
+    (CCG) rules and displays the parsing results for each sentence. It measures
+     the time taken for parsing and counts the total number of successful parses.
+
+    Example usage:
+    run("John loves Mary.\nShe sings a song.")
+    """
     start_time = time.time()
+
+    # Create a CCGrammar object from the grammar.
     ccg = CCGrammar(grammar)
     cpt = 0
-    for str in [str1 for str in txt.split("\n") for str1 in [str.strip()] if str1]:
-        #print("##########################################################################################")
-        #print(f"# Parsing de : \"{str}\" :")
-        #print("##########################################################################################\n")
-        parses = CCGCKYParser(ccg, str, use_typer = False)
+    # Split the input 'txt' by newline characters to process each sentence separately.
+    for sentence in (str1.strip() for str1 in txt.split("\n") if str1.strip()):
+        # Print the sentence being parsed.
+        print("#############################################################")
+        print(f"# Parsing of: \"{sentence}\":")
+        print("#############################################################\n")
+        # Use the CCGCKYParser to parse the current sentence, setting 'use_typer' to False.
+        parses = CCGCKYParser(ccg, sentence, use_typer=False)
         cpt_n = 0
+
         if parses:
-            for p in parses:
-                #print(p.current.expr.show(), p.current.sem.show(), "\n")
-                print(p.show(sem=True))
-                #print("FIN DU PARSE\n")
+            # Iterate through the parsing results and display them.
+            for parse in parses:
+                #print(parse.show(sem=True))
+                print(parse.current.expr.show(), parse.current.sem.show())
                 cpt_n += 1
                 break
-            #print(cpt_n, str)
         else:
+            # Handle cases where parsing fails.
             print(f"@@@@@@@@@@@@ FAIL on ::: {str} @@@@@@@@@@@@\n")
+
         cpt += cpt_n
-    print("TIME :", time.time() - start_time)
+
+    # Calculate and display the time taken for parsing.
+    print("TIME:", time.time() - start_time)
+
+    # Display the total count of successful parses.
     print("CPT TOTAL", cpt)
 
-txt0 = '''Le chat qui dort est noir
-'''
-
-#run(txt)
-run(txt)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-    TRES BIEN Un chat dort
-    TRES BIEN Il dort
-    TRES BIEN Le chat dort paisiblement
-    TRES BIEN Le chat noir dort
-    TRES BIEN Le méchant chat dort
-    BIEN Le très méchant chat dort
-    TRES BIEN Le chat de la sœur de mon voisin dort
-    PAS OK Le chat que mon voisin lui donne mange
-    TRES BIEN Le chat qui dort est noir
-    TRES BIEN Le chat mange la souris
-    TRES BIEN Le chat la mange
-    TRES BIEN Il la mange
-    TRES BIEN Quel chat mange la souris ?
-    TRES BIEN Qui mange la souris ?
-    TRES BIEN (phrase ambigüe) Quelle souris mange le chat ?
-    TRES BIEN La souris est mangée par le chat
-    TRES BIEN Elle est mangée par le chat
-    TRES BIEN Quelle souris est mangée par le chat ?
-    TRES BIEN Le chat mange la souris avec ses dents
-    TRES BIEN Le chat la mange avec ses dents
-    TRES BIEN Avec quoi le chat mange la souris ?
-    MOYEN Le rat donne un fromage à la souris
-    MOYEN Un fromage est donné par le rat à la souris
-    FAUX/MAUVAIS A quelle souris un fromage est donné par le rat ?
-    MOYEN Il le donne à la souris
-    FAUX/MAUVAIS Il le lui donne
-    CORRECT ? Il souhaite que mon voisin lui donne le chat
-    FAUX/MAUVAIS Il souhaite donner le chat à mon voisin
-    BIEN Le chat de mon voisin pourchasse et attrape la souris
-    TRES BIEN La souris dort et le chat de mon voisin attrape la souris
-    TRES BIEN Le chat dort et la souris dort
-    TRES BIEN Le chat et la souris dorment
-    TRES BIEN le chat mange la souris et le fromage
-    TRES BIEN la souris de mon chat et le fromage dorment
-    TRES BIEN un fromage très méchant mange le fromage
-    TRES BIEN le voisin de mon chat mange mon voisin
-    TRES BIEN Le chat mange mon fromage avec la souris
-    BIEN Le méchant chat attrape et mange la souris paisiblement
-    TRES BIEN Le chat est méchant
-    TRES BIEN La souris est mangée par mon voisin
-    TRES BIEN La souris est mangée par mon voisin avec ses dents
-    MOYEN Le fromage mange avec ses souris
-    TRES BIEN Le méchant chat noir est noir et méchant
-    TRES BIEN Le rat mange ses dents avec ses dents
-    TRES BIEN La souris est mangée
-    TRES BIEN La souris est mangée par ses dents
-    TRES BIEN La souris mange un rat paisiblement
-    MAUVAIS La souris mange paisiblement paisiblement un rat
-'''
+run(TXT_SAMPLE, GRAMMAR)
