@@ -273,6 +273,7 @@ def run(txt, grammar):
     # Create a CCGrammar object from the grammar.
     ccg = CCGrammar(grammar)
     cpt = 0
+    print(ccg.show())
     # Split the input 'txt' by newline characters to process each sentence separately.
     for sentence in (str1.strip() for str1 in txt.split("\n") if str1.strip()):
         # Print the sentence being parsed.

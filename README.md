@@ -13,7 +13,7 @@
 ***
 ### General Informations
 <a name="general-info"></a>
-This repository contains the implementation of the [CKY (Cocke-Kasami-Younger) algorithm](https://en.wikipedia.org/wiki/CYK_algorithm) for parsing natural language sentences using [Combinatory Categorial Grammar (CCG)](https://en.wikipedia.org/wiki/Combinatory_categorial_grammar). 
+This repository contains the implementation of the [CKY (Cocke-Kasami-Younger) algorithm](https://en.wikipedia.org/wiki/CYK_algorithm) for parsing natural language sentences using [Combinatory Categorial Grammar (CCG)](https://en.wikipedia.org/wiki/Combinatory_categorial_grammar).
 
 CCG is a linguistically motivated grammar formalism that offers flexibility in representing both syntax and semantics.
 
@@ -53,8 +53,8 @@ The project is still under development
 - [x] Is able to compute derivations
 - [x] Is able to print the derivations in a concise and human readable way
 - [x] Is adaptive (new rules can be easily added) -> But only unary/binary rules for printing !
+- [x] Is well documented (pylint scores > 9/10)
 - [ ] Is not able to compute weights on derivations
-- [ ] Is not well documented
 - [ ] Does not check cycles in syntax shortcuts of type
 - [ ] Has not yet been formally tested
 - [ ] Does not come with a sentence generator using the parsed grammar
@@ -62,7 +62,7 @@ The project is still under development
 
 We also give a grammar sample, which is unfinished
 - [x] All correct sentences can be parsed
-- [x] Not too ambiguous 
+- [x] Not too ambiguous
 - [ ] Semantics are still a bit cobbled together, but mainly work
 - [ ] Can manage subjunctive sentences
 - [ ] Does not yet have consistent weights on derivations
@@ -103,4 +103,3 @@ This project is released under the [MIT License](LICENSE) as specified in the [L
 #### References
 
 - CCGbank: A Corpus of CCG Derivations and Dependency Structures Extracted from the Penn Treebank. J. Hockenmaier, M. Steedman. https://doi.org/10.1162/coli.2007.33.3.355
-
