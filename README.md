@@ -72,8 +72,6 @@ We also give a grammar sample, which is unfinished
 <a name="installation"></a>
 - **Python 3.12 or above**: The project is developed using Python 3.12.
 
-- **RDParser**: The `RDParser` library is incorporated to enhance parsing capabilities. This external dependency enables the project to work with CCG grammar rules and lexicon entries efficiently.
-
 Make sure to have these libraries installed and compatible with your Python environment for the project to function correctly.
 ***
 ### Collaboration
