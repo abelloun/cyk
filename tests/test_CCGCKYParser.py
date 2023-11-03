@@ -26,9 +26,9 @@ class TestInference(unittest.TestCase):
         hyp1 = CCGExprVar("X")
         hyp2 = CCGExprString("apple")
         concl = CCGExprVar("Y")
-        inference = Inference("Example Rule", [hyp1, hyp2], concl)
+        inference = Inference("$R", [hyp1, hyp2], concl)
 
-        self.assertEqual(inference.name, "Example Rule")
+        self.assertEqual(inference.name, "$R")
         self.assertEqual(inference.hyps, [hyp1, hyp2])
         self.assertEqual(inference.concl, concl)
         self.assertIsNone(inference.sem)
@@ -59,9 +59,9 @@ class TestInference(unittest.TestCase):
                                                               CCGTypeVar("Y")))
         concl = Judgement(CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")), CCGTypeVar("C"))
         inference = Inference("$R", [hyp1, hyp2], concl, lambda data: data[1].sem.apply(data[0].sem) if data[0].sem and data[1].sem else None)
-        dataa = [Judgement(CCGExprString('fruit'), CCGTypeAtomic("NP")), Judgement(CCGExprString('apple'), CCGTypeComposite(0, CCGTypeAtomic("S"),
+        data = [Judgement(CCGExprString('fruit'), CCGTypeAtomic("NP")), Judgement(CCGExprString('apple'), CCGTypeComposite(0, CCGTypeAtomic("S"),
                                                                                                                             CCGTypeAtomic("NP")))]
-        result = inference.match(dataa)
+        result = inference.match(data)
         self.assertIsInstance(result, Judgement)
         self.assertEqual(result.expr.show(), '"apple fruit"')
         self.assertEqual(result.type.show(), '$C')
@@ -185,6 +185,52 @@ class TestCCGParser(unittest.TestCase):
         self.assertIsInstance(result, list)
         self.assertGreater(len(result), 1)  # Ensure that the input is ambiguous
 
+
+class TestCKYDerivation(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.hyp1 = Judgement(CCGExprVar("b"), CCGTypeVar("Y"))
+        cls.hyp2 = Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"),
+                                                              CCGTypeVar("Y")))
+        cls.concl = Judgement(CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")), CCGTypeVar("C"))
+        cls.data = [Judgement(CCGExprString('fruit'), CCGTypeAtomic("NP")), Judgement(CCGExprString('apple'), CCGTypeComposite(0, CCGTypeAtomic("S"),
+                                                                                                                            CCGTypeAtomic("NP")))]
+
+
+        cls.combinator = Inference("$R", [cls.hyp1, cls.hyp2], cls.concl, lambda data: data[1].sem.apply(data[0].sem) if data[0].sem and data[1].sem else None)
+        cls.current = cls.combinator.match(cls.data)
+
+    def test_init(self):
+        current = self.current
+        past = None
+        derivation = CKYDerivation(current, past, self.combinator)
+
+        self.assertEqual(derivation.current, current)
+        self.assertEqual(derivation.past, past)
+        self.assertEqual(derivation.combinator, self.combinator)
+
+    def test_str(self):
+        current = self.current
+        past = None
+        derivation = CKYDerivation(current, past, self.combinator)
+        string_representation = str(derivation)
+
+        self.assertEqual(string_representation, '"apple fruit"\n     $C')
+
+    def test_sub_show(self):
+        derivation = CKYDerivation(self.current, None, self.combinator)
+        sub_representation, width = derivation.sub_show()
+
+        self.assertIsInstance(sub_representation, str)
+        self.assertIsInstance(width, int)
+
+    def test_show(self):
+        past = None
+        derivation = CKYDerivation(self.current, past, self.combinator)
+        string_representation = derivation.show()
+
+        self.assertIsInstance(string_representation, str)
 
 if __name__ == '__main__':
     unittest.main()
