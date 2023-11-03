@@ -60,9 +60,9 @@ The project is still under development
 - [x] Is able to print the derivations in a concise and human readable way
 - [x] Is adaptive (new rules can be easily added) -> But only unary/binary rules for printing !
 - [x] Is well documented (pylint scores > 9/10)
+- [x] Is tested (84% coverage)
 - [ ] Is not able to compute weights on derivations
 - [ ] Does not check cycles in syntax shortcuts of type
-- [ ] Has not yet been formally tested
 - [ ] Does not come with a sentence generator using the parsed grammar
 - [ ] Does not handle errors cleanly (unclear error messages)
 

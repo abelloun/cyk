@@ -68,7 +68,7 @@ class TokenError(Exception):
                                     (default is "Token not found: {token}").
         """
         self.token = token
-        self.message = message + "\"{token}\""
+        self.message = message + f"\"{token}\""
         super().__init__(self.message)
 
 
@@ -631,7 +631,7 @@ def add_combinations(combinators, left, right, current_chart):
                        CompositionRight, TypeRaisingRight, TypeRaisingLeft]
     >>> left = Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("X"), CCGTypeVar("Y")))
     >>> right = Judgement(CCGExprVar("b"), CCGTypeVar("Y"))
-    >>> chart = {0: {1: set()}}
+    >>> chart = set()
     >>> result = add_combinations(combinators, left, right, chart)
     >>> print(result)
     {0: {1: {Judgement(CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")), CCGTypeVar("X")}}}
@@ -743,10 +743,12 @@ def CCGCKYParser(ccg, input_string, use_typer=False):
     Raises:
         TokenError: If a token in the input string is not recognized in the CCG grammar.
     """
+    if not input_string or input_string.isspace():
+        raise SyntaxError("Empty input")
     tokens = input_string.strip().split()
     num_tokens = len(tokens)
     chart = {}
-    combinators = {ApplicationLeft, ApplicationRight}
+    combinators = {ApplicationLeft, ApplicationRight, CompositionLeft, CompositionRight}
     # Reconnaisance des symboles terminaux
     for i, token in enumerate(tokens):
         if token not in ccg.rules:

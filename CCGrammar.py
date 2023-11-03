@@ -105,6 +105,19 @@ LambdaTermParser = rd.grow('expr', lambda expr: rd.alt(
     rd.act(Identifier, LambdaTermVar)
 ))
 
+WeightParser = rd.act(
+    rd.seq(
+        rd.str("Weight"),
+        rd.str("("),
+        DQuoString,
+        rd.lst1(rd.act(rd.seq(rd.str(","), CCGTypeParser), lambda x: x[1])),
+        rd.str(")"),
+        rd.str("="),
+        Float
+    ),
+    lambda x: Weight(x[2], x[3], x[6])
+)
+
 
 class Judgement:
     """
@@ -410,20 +423,6 @@ class Weight:
         # ~ if len(self.premices) == len(premices):
         #     ~ for (l, r) in zip(self.premices, premices):
         #         ~ if not (l == r):
-
-
-WeightParser = rd.act(
-    rd.seq(
-        rd.str("Weight"),
-        rd.str("("),
-        DQuoString,
-        rd.lst1(rd.act(rd.seq(rd.str(","), CCGTypeParser), lambda x: x[1])),
-        rd.str(")"),
-        rd.str("="),
-        Float
-    ),
-    lambda x: Weight(x[2], x[3], x[6])
-)
 
 
 class CCGrammar:

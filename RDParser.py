@@ -158,7 +158,7 @@ class RDParser:
         """
         strl = len(strg)
 
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             s = str_e[0:strl]
             if s == strg:
                 return strg, str_e[strl:]
@@ -190,7 +190,7 @@ class RDParser:
         """
         reg = re.compile(regex)
 
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             m = reg.match(str_e)
             if m is not None:
                 res = m.group(0)
@@ -218,7 +218,7 @@ class RDParser:
         >>> print(result)
         # Output: (None, 'Hello, World!')
         """
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             if str_e == "":
                 return None, ""
             if ignore:
@@ -246,7 +246,7 @@ class RDParser:
         >>> print(result)
         # Output: ('Constant', 'Hello, World!')
         """
-        def parse(str_e, mem, _=None):
+        def parse(str_e, mem={}, _=None):
             return val, str_e
         return parse
 
@@ -270,7 +270,7 @@ class RDParser:
         >>> print(result)
         # Output: ('Hello, ', ' World!')
         """
-        def parse(str_e, mem, _=None):
+        def parse(str_e, mem={}, _=None):
             return _parse(str_e, mem)
         return parse
 
@@ -295,7 +295,7 @@ class RDParser:
         >>> print(result)
         # Output: (['Hello, ', 'World'], '!')
         """
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             idx = 0
             seq = [None for _ in parsers]
             for parse in parsers:
@@ -328,7 +328,7 @@ class RDParser:
         >>> print(result)
         # Output: ('Hi', ', there!')
         """
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             for parse in parsers:
                 res = parse(str_e, mem, ignore)
                 if res:
@@ -357,7 +357,7 @@ class RDParser:
         >>> print(result)
         # Output: ('Hello, ', 'World!')
         """
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             res = _parse(str_e, mem, ignore)
             val = None
             if res:
@@ -386,7 +386,7 @@ class RDParser:
         >>> print(result)
         # Output: (['123', '456'], ' apples 456 oranges')
         """
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             idx = 0
             lst = []
             res = _parse(str_e, mem, ignore)
@@ -419,7 +419,7 @@ class RDParser:
         >>> print(result)
         # Output: (['123', '456'], ' apples 456 oranges')
         """
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             idx = 0
             lst = []
             res = _parse(str_e, mem, ignore)
@@ -456,7 +456,7 @@ class RDParser:
         >>> print(result)
         # Output: (246, ' apples')
         """
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             res = _parse(str_e, mem, ignore)
             if res:
                 return act(res[0]), res[1]
@@ -487,10 +487,10 @@ class RDParser:
         # Output: (['1', '+', '2', '+', '3'], '')
         """
 
-        def lazy(str_e, mem, ignore=None):
+        def lazy(str_e, mem={}, ignore=None):
             return ptr[0](str_e, mem, ignore)
 
-        def parse(str_e, mem, ignore=None):
+        def parse(str_e, mem={}, ignore=None):
             pos = len(str_e)
             uid = f"{ide}:{pos}"
             if uid in mem:
