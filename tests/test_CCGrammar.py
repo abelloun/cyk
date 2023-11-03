@@ -72,6 +72,3 @@ class TestCCGrammar(unittest.TestCase):
 
         self.assertIsInstance(grammar.show(), str)
         self.assertGreater(len(grammar.show()), 0)
-
-if __name__ == '__main__':
-    unittest.main()

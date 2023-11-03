@@ -231,6 +231,3 @@ class TestCKYDerivation(unittest.TestCase):
         string_representation = derivation.show()
 
         self.assertIsInstance(string_representation, str)
-
-if __name__ == '__main__':
-    unittest.main()

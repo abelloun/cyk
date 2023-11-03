@@ -49,5 +49,57 @@ class TestCCGExpressions(unittest.TestCase):
         with self.assertRaises(ConcatError):
             concat_expr.match(data_expr, sigma)
 
-if __name__ == "__main__":
-    unittest.main()
+    def test_match_and_replace(self):
+        var_expr = CCGExprVar("X")
+        data_expr = CCGExprString("apple")
+        sigma = {}
+
+        # Test initial match
+        result = var_expr.match(data_expr, sigma)
+        self.assertTrue(result)
+        self.assertEqual({k: v.show() for k, v in sigma.items()}, {"X": CCGExprString("apple").show()})
+
+        # Test re-match with different data
+        data_expr2 = CCGExprString("banana")
+        sigma = {}  # Reset the substitution dictionary
+        result = var_expr.match(data_expr2, sigma)
+        self.assertTrue(result)
+        self.assertEqual({k: v.show() for k, v in sigma.items()}, {"X": CCGExprString("banana").show()})
+
+        # Test re-match with same data
+        sigma = {}  # Reset the substitution dictionary
+        result = var_expr.match(data_expr, sigma)
+        self.assertTrue(result)
+        self.assertEqual({k: v.show() for k, v in sigma.items()}, {"X": CCGExprString("apple").show()})
+
+    def test_replace_with_substitution(self):
+        var_expr = CCGExprVar("X")
+        substitution = {"X": CCGExprString("apple")}
+
+        # Test replacing with substitution
+        replaced_expr = var_expr.replace(substitution)
+        self.assertEqual(replaced_expr.show(), CCGExprString("apple").show())
+
+        # Test replacing with an empty substitution
+        sigma = {}  # Reset the substitution dictionary
+        replaced_expr = var_expr.replace(sigma)
+        self.assertEqual(replaced_expr, var_expr)
+
+    def test_match_return_value(self):
+        var_expr = CCGExprVar("X")
+        data_expr = CCGExprString("apple")
+        sigma = {}
+
+        # Ensure the return value of match is True
+        result = var_expr.match(data_expr, sigma)
+        self.assertTrue(result)
+
+    def test_match_with_existing_variable(self):
+        var_expr = CCGExprVar("X")
+        data_expr = CCGExprString("apple")
+        sigma = {"X": CCGExprString("banana")}
+
+        # Ensure that when self.name is in sigma, it matches the data but doesn't update sigma
+        result = var_expr.match(data_expr, sigma)
+        self.assertFalse(result)
+        self.assertEqual({k: v.show() for k, v in sigma.items()}, {"X": CCGExprString("banana").show()})

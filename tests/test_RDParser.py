@@ -56,6 +56,3 @@ class TestRDParser(unittest.TestCase):
         parser = RDParser.act(RDParser.rgx(r'\d+'), double_number)
         result = parser("123 apples")
         self.assertEqual(result, (246, ' apples'))
-
-if __name__ == '__main__':
-    unittest.main()

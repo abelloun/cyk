@@ -60,7 +60,3 @@ class TestCCGTypes(unittest.TestCase):
 
         # Compare the attributes of the objects
         self.assertEqual(sigma["X"].name, "Y")
-
-
-if __name__ == '__main__':
-    unittest.main()

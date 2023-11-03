@@ -152,7 +152,7 @@ class CCGExprVar(CCGExpr):
         if self.name not in sigma:
             sigma[self.name] = data
             return True
-        return sigma[self.name].match(data)
+        return sigma[self.name].match(data, None)
 
 
 class CCGExprString(CCGExpr):

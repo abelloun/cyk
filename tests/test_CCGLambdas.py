@@ -50,7 +50,3 @@ class TestLambdaTerms(unittest.TestCase):
         lambda_term = LambdaTermLambda("x", LambdaTermVar("y"))
         compact_str = show_compact(lambda_term)
         self.assertEqual(compact_str.strip(), ", x. y")
-
-
-if __name__ == "__main__":
-    unittest.main()
