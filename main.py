@@ -110,13 +110,14 @@ GRAMMAR = '''
     # Pronoms personnels
     Il => Phrase/VbIntransSM {\\P. P(\\R x. masculin(x) & R(x))}
     Elle => Phrase/VbIntransSF {\\P. P(\\R x. féminin(x) & R(x))}
+
     # Verbes
     pourchasse => VbTransSF {\\P Q R. Q(\\z. P(pourchasse(z) & (\\s. R(z))))}
     pourchasse => VbTransSM {\\P Q R. Q(\\z. P(pourchasse(z) & (\\s. R(z))))}
     attrape => VbTransSF {\\P Q R. Q(\\z. P(attrape(z) & (\\s. R(z))))}
     attrape => VbTransSM {\\P Q R. Q(\\z. P(attrape(z) & (\\s. R(z))))}
-    mange => VbTransSF {\\P Q R. Q(\\z. P(mange(z) & (\\s. R(z))))}
-    mange => VbTransSM {\\P Q R. Q(\\z. P(mange(z) & (\\s. R(z))))}
+    mange => VbTransSF {\\P Q R. Q(\\z. P(mange & (\\s. R(z))))}
+    mange => VbTransSM {\\P Q R. Q(\\z. P(mange & (\\s. R(z))))}
     mange => VbIntransSF {\\P R. P(R & mange)}
     mange => VbIntransSM {\\P R. P(R & mange)}
     dorment => VbIntransPM {\\P R. P(R & dort)}
@@ -146,16 +147,14 @@ GRAMMAR = '''
     # Compléments
     à => (VbTransSM\\VbTransSM)\\GrNom {\\P Q S T R. S(\\z. P(Q(\\U. T(U(z) & R), transfert, z)))}
     à => (VbTransSF\\VbTransSF)\\GrNom  {\\P Q S T R. S(\\z. P(Q(\\U. T(U(z) & R), transfert, z)))}
-
     à => (PP[Masc]\\PP[Masc])/GrNom {\\P Q R z. P(Q(\\s. R, z))}
     à => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R z. P(Q(\\s. R, z))}
     à => (VbTransSM\\AnteposMasc)\\VbTransSM {\\P Q S T R. S(\\z. Q(\\M.M, P(\\U. T(U(z) & R), transfert, z)))}
     à => (VbTransSF\\AnteposFem)\\VbTransSF {\\P Q S T R. S(\\z. Q(\\M.M, P(\\U. T(U(z) & R), transfert, z)))}
-
     avec => AdvF/GrNom {\\P S Q R x z. P(utilise(z), x) & S(Q, R, z) }
     avec => AdvM/GrNom {\\P S Q R x z. P(utilise(z), x) & S(Q, R, z) }
-    de => (GrNom[Masc]\\GrNom[Masc])/GrNom {\\P Q S x y. P(appartient(x) & (\\z. Q(S, x)), y)}
-    de => (GrNom[Fem]\\GrNom[Fem])/GrNom {\\P Q S x y. P(appartient(x) & (\\z. Q(S, x)), y)}
+    de => (GrNom[Masc]\\GrNom[Masc])/GrNom {\\P Q S x. Q((\\z. P((\\z. S(x)) & appartient(x))), x)}
+    de => (GrNom[Fem]\\GrNom[Fem])/GrNom {\\P Q S x. Q((\\z. P((\\z. S(x)) & appartient(x))), x)}
     par => (PP[Masc]\\PP[Masc])/GrNom {\\Q R P x y. Q((\\u. R(P,u,y)), x)}
     par => (PP[Fem]\\PP[Fem])/GrNom {\\Q R P x y. Q((\\u. R(P,u,y)), x)}
 
@@ -251,7 +250,8 @@ TXT_SAMPLE = '''
 '''
 
 TXT_TEST='''
-Un chat mange la souris
+Le chat de mon voisin dort
+Le chat de la sœur de mon voisin dort
 '''
 def run(txt, grammar):
     """
@@ -276,23 +276,23 @@ def run(txt, grammar):
     # Split the input 'txt' by newline characters to process each sentence separately.
     for sentence in (str1.strip() for str1 in txt.split("\n") if str1.strip()):
         # Print the sentence being parsed.
-        print("#############################################################")
-        print(f"# Parsing of: \"{sentence}\":")
-        print("#############################################################\n")
+        #print("#############################################################")
+        #print(f"# Parsing of: \"{sentence}\":")
+        #print("#############################################################\n")
         # Use the CCGCKYParser to parse the current sentence, setting 'use_typer' to False.
         parses = CCGCKYParser(ccg, sentence, use_typer=False)
         cpt_n = 0
 
-        if parses:
+        if parses and "de" in sentence:
             # Iterate through the parsing results and display them.
             for parse in parses:
-                #print(parse.show(sem=True))
+                print(parse.show(sem=True))
                 print(parse.current.expr.show(), parse.current.sem.show())
                 cpt_n += 1
-                break
+                #break
         else:
             # Handle cases where parsing fails.
-            print(f"@@@@@@@@@@@@ FAIL on ::: {str} @@@@@@@@@@@@\n")
+            print(f"@@@@@@@@@@@@ FAIL on ::: {sentence} @@@@@@@@@@@@\n")
 
         cpt += cpt_n
 
