@@ -212,11 +212,17 @@ class Inference:
         """
         sigma = {}
         hyps, concl = self.helper((self.hyps, self.concl))
+
+
+        if len(hyps) != len(data):
+             return None
+
         for (pat, dat) in zip(hyps, data):
             pat = pat.replace(sigma)
             dat = dat.replace(sigma)
             if not pat.match(dat, sigma):
                 return None
+
         sem = None
         if self.sem:
             sem = (self.sem)(data)
