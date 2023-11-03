@@ -1,11 +1,11 @@
 """
 CCG Types Module
 
-This module defines classes and utilities for working with Combinatory Categorial
-Grammar (CCG) types, a formalism used in natural language processing for
-semantic composition.
-It includes classes for CCG types, type unification, type variables, atomic types,
-composite types, annotations, and type operations.
+This module defines classes and utilities for working with Combinatory
+Categorial Grammar (CCG) types, a formalism used in natural language processing
+for semantic composition.
+It includes classes for CCG types, type unification, type variables,
+atomic types, composite types, annotations, and type operations.
 
 Classes:
 - CCGType: Represents CCG types and provides methods for type unification.
@@ -15,26 +15,29 @@ Classes:
 - CCGTypeComposite: Represents a composite CCG type.
 - CCGTypeAnnotation: Represents a CCG type with an annotation.
 
-The module aims to assist in working with CCG types and type operations in natural
-language understanding and parsing tasks.
+The module aims to assist in working with CCG types and type operations
+in natural language understanding and parsing tasks.
 """
 
-################################################
-## CCG Types
-################################################
+
 class CCGType:
     """
-    Represents a Combinatory Categorial Grammar (CCG) type for semantic composition.
+    Represents a Combinatory Categorial Grammar (CCG) type for
+    semantic composition.
 
-    This class provides a representation of CCG types and methods for type unification.
+    This class provides a representation of CCG types and methods for
+    type unification.
 
     Class Attributes:
-    - count (int): A class-level counter used for generating fresh variable names.
+    - count (int): A class-level counter used for generating fresh
+                    variable names.
 
     Methods:
     - `fresh(var)`: Generate a fresh variable name based on the input variable.
-    - `reset()`: Reset the class-level counter for generating fresh variable names.
-    - `unify(left, right, sigma)`: Attempt to unify two CCG types and update a type substitution.
+    - `reset()`: Reset the class-level counter for generating fresh
+                 variable names.
+    - `unify(left, right, sigma)`: Attempt to unify two CCG types and update
+                                    a type substitution.
 
     Args:
     - left (CCGType): The left type for unification.
@@ -158,16 +161,20 @@ class CCGType:
             case (CCGTypeComposite(dir=dir1, left=left1, right=right1), CCGTypeComposite(dir=dir2, left=left2, right=right2)):
                 same_dir = dir1 == dir2
                 unif_left = cls.unify(left1, left2, sigma)
-                unif_right = cls.unify(right1.replace(sigma), right2.replace(sigma), sigma)
+                r1rep = right1.replace(sigma)
+                r2rep = right2.replace(sigma)
+                unif_right = cls.unify(r1rep, r2rep, sigma)
                 result = same_dir and unif_left and unif_right
 
         return result
+
 
 class CCGTypeVar(CCGType):
     """
     Represents a CCG type variable.
 
-    This class represents a variable in Combinatory Categorial Grammar (CCG) types.
+    This class represents a variable in Combinatory Categorial
+    Grammar (CCG) types.
 
     Args:
     - name (str): The name of the CCG type variable.
@@ -210,8 +217,8 @@ class CCGTypeVar(CCGType):
         - ccgtype (CCGType): The replacement CCG type.
 
         Returns:
-        CCGType: The same CCGType if the type variable names match, or the replacement
-                 CCG type if they don't.
+        CCGType: The same CCGType if the type variable names match, or
+                    the replacement CCG type if they don't.
 
         Example:
         >>> type_variable = CCGTypeVar("X")
@@ -223,15 +230,17 @@ class CCGTypeVar(CCGType):
 
     def replace(self, sigma):
         """
-        Replace type variables in the CCGTypeVar using a substitution dictionary.
+        Replace type variables in the CCGTypeVar using a substitution
+        dictionary.
 
         Args:
         - sigma (dict): A dictionary that maps type variable names to CCGType
                         objects for substitution.
 
         Returns:
-        CCGType: The CCGType object resulting from the replacement if the type variable
-        name is in the substitution dictionary, or the original CCGTypeVar if not.
+        CCGType: The CCGType object resulting from the replacement if the
+        type variable name is in the substitution dictionary, or the original
+        CCGTypeVar if not.
 
         Example:
         >>> type_variable = CCGTypeVar("X")
@@ -276,7 +285,8 @@ class CCGTypeAtomicVar(CCGType):
         Return a string representation of the CCGTypeAtomicVar.
 
         Returns:
-        str: A string representation of the CCGTypeAtomicVar with the type variable.
+        str: A string representation of the CCGTypeAtomicVar with the type
+             variable.
 
         Example:
         >>> atomic_var_type = CCGTypeAtomicVar("X")
@@ -410,13 +420,14 @@ class CCGTypeComposite(CCGType):
     """
     Represents a composite CCG type.
 
-    This class represents a composite Combinatory Categorial Grammar (CCG) type.
+    This class represents a composite Combinatory Categorial
+    Grammar (CCG) type.
     A composite type is constructed from two
     component types and a direction (forward or backward).
 
     Args:
-    - dir (bool): The direction of the composite type. True for forward (e.g., NP/N),
-     False for backward (e.g., N\\NP).
+    - dir (bool): The direction of the composite type. True for
+                  forward (e.g., NP/N), False for backward (e.g., N\\NP).
     - left (CCGType): The left component type of the composite.
     - right (CCGType): The right component type of the composite.
 
@@ -432,8 +443,8 @@ class CCGTypeComposite(CCGType):
         Initialize a CCGTypeComposite object.
 
         Args:
-        - direction (bool): The direction of the composite type. True for forward,
-        False for backward.
+        - direction (bool): The direction of the composite type. True for
+                            forward, False for backward.
         - left (CCGType): The left component type of the composite.
         - right (CCGType): The right component type of the composite.
 
@@ -455,7 +466,8 @@ class CCGTypeComposite(CCGType):
         str: A string representation of the CCGTypeComposite.
 
         Example:
-        >>> ccg_type = CCGTypeComposite(True, CCGTypeAtomic("NP"), CCGTypeAtomic("N"))
+        >>> ccg_type = CCGTypeComposite(True, CCGTypeAtomic("NP"),
+                                              CCGTypeAtomic("N"))
         >>> print(ccg_type.show())
         """
         slash = "/" if self.dir else "\\"
@@ -487,11 +499,12 @@ class CCGTypeComposite(CCGType):
 
     def replace(self, sigma):
         """
-        Replace type variables in the CCGTypeComposite using a substitution dictionary.
+        Replace type variables in the CCGTypeComposite using a substitution
+        dictionary.
 
         Args:
-        - sigma (dict): A dictionary that maps type variable names to replacement
-                        CCG types.
+        - sigma (dict): A dictionary that maps type variable names to
+                        replacement CCG types.
 
         Returns:
         CCGTypeComposite: A new CCGTypeComposite with type variables replaced
@@ -566,7 +579,8 @@ class CCGTypeAnnotation(CCGType):
         - type (CCGType): The replacement CCG type.
 
         Returns:
-        CCGTypeAnnotation: A new CCGTypeAnnotation with type variables expanded.
+        CCGTypeAnnotation: A new CCGTypeAnnotation with type variables
+                            expanded.
 
         Example:
         >>> base_type = CCGTypeVariable("X")
@@ -584,8 +598,8 @@ class CCGTypeAnnotation(CCGType):
         dictionary.
 
         Args:
-        - sigma (dict): A dictionary that maps type variable names to replacement
-                        CCG types.
+        - sigma (dict): A dictionary that maps type variable names to
+                        replacement CCG types.
 
         Returns:
         CCGTypeAnnotation: A new CCGTypeAnnotation with type variables replaced

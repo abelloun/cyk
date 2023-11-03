@@ -1,9 +1,11 @@
 """
 CCG Expressions
 
-This module defines classes for working with Combinatory Categorial Grammar (CCG) expressions.
-CCG expressions are used to represent strings of terminals and are essential for various
-natural language processing tasks, such as semantic composition and parsing.
+This module defines classes for working with Combinatory Categorial Grammar
+(CCG) expressions.
+CCG expressions are used to represent strings of terminals and are essential
+for various natural language processing tasks, such as semantic composition
+and parsing.
 
 Classes:
 - CCGExpr: The base class for CCG expressions.
@@ -11,11 +13,11 @@ Classes:
 - CCGExprString: Represents a string literal within a CCG expression.
 - CCGExprConcat: Represents the concatenation of two CCG expressions.
 
-Each class provides methods for manipulating and working with CCG expressions. These
-expressions can be variables, string literals, or combinations of both.
+Each class provides methods for manipulating and working with CCG expressions.
+These expressions can be variables, string literals, or combinations of both.
 
-The module aims to facilitate the creation and manipulation of CCG expressions for
-linguistic analysis and natural language processing applications.
+The module aims to facilitate the creation and manipulation of CCG expressions
+for linguistic analysis and natural language processing applications.
 
 Example:
 >>> var_expr = CCGExprVar("X")
@@ -25,10 +27,7 @@ Example:
 "X apple"
 """
 
-####################################
-## CCG Expressions
-## ( strings of terminals )
-####################################
+
 class ConcatError(Exception):
     """Exception raised for errors in the concatenation.
 
@@ -38,10 +37,10 @@ class ConcatError(Exception):
         message -- explanation of the error
     """
 
-    def __init__(self, data, sigma, message="Can't match a concatenation expr !"):
+    def __init__(self, data, sigma, msg="Can't match a concatenation expr !"):
         self.data = data
         self.sigma = sigma
-        self.message = message
+        self.message = msg
         super().__init__(self.message)
 
 
@@ -57,6 +56,7 @@ class CCGExpr:
     - CCGExprString: Represents a string literal within the CCG expression.
     - CCGExprConcat: Represents the concatenation of two CCG expressions.
     """
+
 
 class CCGExprVar(CCGExpr):
     """
@@ -112,7 +112,8 @@ class CCGExprVar(CCGExpr):
         Replace the variable with a value from a substitution dictionary.
 
         Args:
-        - sigma (dict): A dictionary that maps variable names to CCG expressions.
+        - sigma (dict): A dictionary that maps variable names to
+                        CCG expressions.
 
         Returns:
         CCGExpr: The replacement CCG expression if the variable is in the
@@ -127,15 +128,16 @@ class CCGExprVar(CCGExpr):
 
     def match(self, data, sigma):
         """
-        Match the variable with a data element, updating a substitution dictionary.
+        Match the variable with a data element, updating a substitution
+        dictionary.
 
         Args:
         - data (CCGExpr): A CCG expression to match with.
         - sigma (dict): A dictionary for variable substitution.
 
         Returns:
-        bool: True if the variable matches the data element and the substitution
-                is updated, False otherwise.
+        bool: True if the variable matches the data element and the
+                substitution is updated, False otherwise.
 
         Example:
         >>> var_expr = CCGExprVar("X")
@@ -240,7 +242,8 @@ class CCGExprString(CCGExpr):
         - data (CCGExpr): A CCG expression to match with.
 
         Returns:
-        bool: True if the string literal matches the data element, False otherwise.
+        bool: True if the string literal matches the data element,
+                False otherwise.
 
         Example:
         >>> str_expr = CCGExprString("apple")
@@ -344,26 +347,31 @@ class CCGExprConcat(CCGExpr):
         dictionary (applied recursively).
 
         Args:
-        - sigma (dict): A dictionary that maps variable names to CCG expressions.
+        - sigma (dict): A dictionary that maps variable names to CCG
+                        expressions.
 
         Returns:
-        CCGExprConcat: A new concatenated expression with replaced left and right
-                        expressions.
+        CCGExprConcat: A new concatenated expression with replaced left and
+                        right expressions.
 
         Example:
         >>> left_expr = CCGExprVar("X")
         >>> right_expr = CCGExprVar("Y")
         >>> concat_expr = CCGExprConcat(left_expr, right_expr)
-        >>> substitution = {"X": CCGExprString("Goodbye"), "Y": CCGExprString("World")}
+        >>> substitution = {"X": CCGExprString("Goodbye"),
+                            "Y": CCGExprString("World")}
         >>> replaced_expr = concat_expr.replace(substitution)
         >>> print(replaced_expr.show())
         "Goodbye World"
         """
-        return CCGExprConcat(self.left.replace(sigma), self.right.replace(sigma))
+        lrep = self.left.replace(sigma)
+        rrep = self.right.replace(sigma)
+        return CCGExprConcat(lrep, rrep)
 
     def match(self, data, sigma):
         """
-        Raise an exception since matching a concatenation expression is not supported.
+        Raise an exception since matching a concatenation expression is
+        not supported.
 
         Args:
         - data (CCGExpr): A CCG expression to match with.
@@ -378,6 +386,6 @@ class CCGExprConcat(CCGExpr):
         >>> concat_expr = CCGExprConcat(left_expr, right_expr)
         >>> data_expr = CCGExprString("Example")
         >>> sigma = {}
-        >>> concat_expr.match(data_expr, sigma)  # This will raise an exception.
+        >>> concat_expr.match(data_expr, sigma) # This will raise an exception.
         """
         raise ConcatError(data, sigma)

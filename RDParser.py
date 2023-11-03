@@ -3,9 +3,9 @@ Recursive Descent Monadic Parser Combinator
 
 This class defines a Recursive Descent Monadic Parser Combinator, also known as
 a Seed-Grow parser. It is a powerful tool for defining parsers for text-based
-grammars. The RDParser class provides various parsing operations and combinators
-that can be used to build complex parsers for natural language processing and
-other text processing tasks.
+grammars. The RDParser class provides various parsing operations and
+combinators that can be used to build complex parsers for natural language
+processing and other text processing tasks.
 
 Classes:
 - RDParser: The main class for defining and composing parsing operations.
@@ -35,7 +35,8 @@ Methods:
   operations.
 
 - alt(*parsers):
-  Create a parsing function that alternates between multiple parsing operations.
+  Create a parsing function that alternates between multiple parsing
+  operations.
 
 - mbe(_parse):
   Create a parsing function that matches a parsing operation zero or one time.
@@ -53,8 +54,8 @@ Methods:
   function on the parsing result.
 
 - grow(ide, _parser):
-  Create a parsing function that handles left recursion for the provided parsing
-  operation using memoization.
+  Create a parsing function that handles left recursion for the provided
+  parsing operation using memoization.
 
 The RDParser class and its methods are valuable for defining custom parsers and
 processing textual data in various natural language understanding and parsing
@@ -62,18 +63,15 @@ applications.
 
 Example:
 # Create a parser that matches and doubles numeric values in the input.
->>> double_number_parser = RDParser.act(RDParser.rgx(r'\\d+'), lambda x: int(x) * 2)
+>>> double_number_parser = RDParser.act(RDParser.rgx(r'\\d+'),
+                                        lambda x: int(x) * 2)
 >>> result = double_number_parser("123 apples 456 oranges")
 >>> print(result)
 # Output: (246, ' apples 456 oranges')
 """
 import re
 
-################################################
-## Recursive Descent Monadic Parser Combinator
-## (aka Seed-Grow parser)
-## (for defining the parser for grammar rules)
-################################################
+
 class RDParser:
     """
     Recursive Descent Monadic Parser Combinator
@@ -102,8 +100,8 @@ class RDParser:
     regular expressions, sequencing, alternation, zero or more, one or more,
     and more. It also includes functionality for handling left recursion.
 
-    This class is designed to help define parsers for grammar rules and is useful
-    for various parsing tasks.
+    This class is designed to help define parsers for grammar rules and is
+    useful for various parsing tasks.
 
     Usage example:
     >>> parser = RDParser.str("Hello, ")
@@ -111,10 +109,7 @@ class RDParser:
     >>> print(result)
     ('Hello, ', 'World!')
     """
-    ################################
-    ## ignore the part of the input
-    ## parsed by the ignore parameter
-    ################################
+
     @staticmethod
     def ignore(ignore, parse, str_e, mem):
         """
@@ -141,10 +136,6 @@ class RDParser:
             return None
         return parse(ign[1], mem)
 
-
-    ################################
-    ## parse a string
-    ################################
     @classmethod
     def str(cls, strg):
         """
@@ -165,20 +156,18 @@ class RDParser:
         >>> print(result)
         # Output: ('Hello, ', 'World!')
         """
-        l = len(strg)
-        def parse(str_e, mem, ignore = None):
-            s = str_e[0:l]
+        strl = len(strg)
+
+        def parse(str_e, mem, ignore=None):
+            s = str_e[0:strl]
             if s == strg:
-                return strg, str_e[l:]
+                return strg, str_e[strl:]
             if ignore:
                 return cls.ignore(ignore, parse, str_e, mem)
             return None
+
         return parse
 
-
-    ################################
-    ## parse a regex
-    ################################
     @classmethod
     def rgx(cls, regex):
         """
@@ -190,8 +179,8 @@ class RDParser:
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that matches the provided regular
-        expression pattern ('regex') in the input string.
+        This method returns a parsing function that matches the provided
+        regular expression pattern ('regex') in the input string.
 
         Example:
         >>> parser = RDParser.rgx(r'\\d+')
@@ -200,7 +189,8 @@ class RDParser:
         # Output: ('123', ' apples')
         """
         reg = re.compile(regex)
-        def parse(str_e, mem, ignore = None):
+
+        def parse(str_e, mem, ignore=None):
             m = reg.match(str_e)
             if m is not None:
                 res = m.group(0)
@@ -208,22 +198,19 @@ class RDParser:
             if ignore:
                 return cls.ignore(ignore, parse, str_e, mem)
             return None
+
         return parse
 
-
-    ################################
-    ## $ : end of stream
-    ################################
     @classmethod
     def end(cls):
         """
-        Match the end of the input stream.
+        $ : Match the end of the input stream.
 
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that matches the end of the input
-        stream.
+        This method returns a parsing function that matches the end of the
+        input stream.
 
         Example:
         >>> parser = RDParser.end()
@@ -231,7 +218,7 @@ class RDParser:
         >>> print(result)
         # Output: (None, 'Hello, World!')
         """
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             if str_e == "":
                 return None, ""
             if ignore:
@@ -239,10 +226,6 @@ class RDParser:
             return None
         return parse
 
-
-    ################################
-    ## simply return a value
-    ################################
     @staticmethod
     def val(val):
         """
@@ -263,14 +246,10 @@ class RDParser:
         >>> print(result)
         # Output: ('Constant', 'Hello, World!')
         """
-        def parse(str_e, mem, _ = None):
+        def parse(str_e, mem, _=None):
             return val, str_e
         return parse
 
-
-    ################################
-    ## skip ignore
-    ################################
     @staticmethod
     def raw(_parse):
         """
@@ -282,8 +261,8 @@ class RDParser:
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that applies the provided parsing
-        operation ('_parse') without ignoring any part of the input.
+        This method returns a parsing function that applies the provided
+        parsing operation ('_parse') without ignoring any part of the input.
 
         Example:
         >>> parser = RDParser.raw(RDParser.str("Hello, "))
@@ -291,18 +270,14 @@ class RDParser:
         >>> print(result)
         # Output: ('Hello, ', ' World!')
         """
-        def parse(str_e, mem, _ = None):
+        def parse(str_e, mem, _=None):
             return _parse(str_e, mem)
         return parse
 
-
-    ################################
-    ## A B .. Z : concatenation, sequence
-    ################################
     @staticmethod
     def seq(*parsers):
         """
-        Concatenate and sequence parsers.
+        A B .. Z : Concatenate, sequence parsers.
 
         Args:
         - *parsers (function): Variable number of parsing operations.
@@ -310,16 +285,17 @@ class RDParser:
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that concatenates and sequences the
-        provided parsing operations ('*parsers') in order.
+        This method returns a parsing function that concatenates and sequences
+        the provided parsing operations ('*parsers') in order.
 
         Example:
-        >>> parser = RDParser.seq(RDParser.str("Hello, "), RDParser.str("World"))
+        >>> parser = RDParser.seq(RDParser.str("Hello, "),
+                                  RDParser.str("World"))
         >>> result = parser("Hello, World!")
         >>> print(result)
         # Output: (['Hello, ', 'World'], '!')
         """
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             idx = 0
             seq = [None for _ in parsers]
             for parse in parsers:
@@ -331,14 +307,10 @@ class RDParser:
             return seq, str_e
         return parse
 
-
-    ################################
-    ## A | B | ... | Z : alternation
-    ################################
     @staticmethod
     def alt(*parsers):
         """
-        Alternation of parsers.
+        A | B | ... | Z : Alternation of parsers.
 
         Args:
         - *parsers (function): Variable number of parsing operations.
@@ -346,9 +318,9 @@ class RDParser:
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that alternates between the provided
-        parsing operations ('*parsers') and returns the result of the first
-        successful match.
+        This method returns a parsing function that alternates between the
+        provided parsing operations ('*parsers') and returns the result of the
+        first successful match.
 
         Example:
         >>> parser = RDParser.alt(RDParser.str("Hello"), RDParser.str("Hi"))
@@ -356,7 +328,7 @@ class RDParser:
         >>> print(result)
         # Output: ('Hi', ', there!')
         """
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             for parse in parsers:
                 res = parse(str_e, mem, ignore)
                 if res:
@@ -364,14 +336,10 @@ class RDParser:
             return None
         return parse
 
-
-    ################################
-    ## A? : zero or one
-    ################################
     @staticmethod
     def mbe(_parse):
         """
-        Zero or one parser.
+        A? : Zero or one parser.
 
         Args:
         - _parse (function): The parsing operation to apply.
@@ -379,9 +347,9 @@ class RDParser:
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that attempts to apply the provided
-        parsing operation ('_parse') and returns the result if successful or
-        None if there's no match.
+        This method returns a parsing function that attempts to apply the
+        provided parsing operation ('_parse') and returns the result if
+        successful or None if there's no match.
 
         Example:
         >>> parser = RDParser.mbe(RDParser.str("Hello, "))
@@ -389,7 +357,7 @@ class RDParser:
         >>> print(result)
         # Output: ('Hello, ', 'World!')
         """
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             res = _parse(str_e, mem, ignore)
             val = None
             if res:
@@ -397,14 +365,10 @@ class RDParser:
             return val, str_e
         return parse
 
-
-    ################################
-    ## A* : zero or more
-    ################################
     @staticmethod
     def lst(_parse):
         """
-        Zero or more parser.
+        A* : Zero or more parser.
 
         Args:
         - _parse (function): The parsing operation to apply repeatedly.
@@ -412,9 +376,9 @@ class RDParser:
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that applies the provided parsing
-        operation ('_parse') repeatedly until there is no match, returning a
-        list of all matching results.
+        This method returns a parsing function that applies the provided
+        parsing operation ('_parse') repeatedly until there is no match,
+        returning a list of all matching results.
 
         Example:
         >>> parser = RDParser.lst(RDParser.rgx(r'\\d+'))
@@ -422,7 +386,7 @@ class RDParser:
         >>> print(result)
         # Output: (['123', '456'], ' apples 456 oranges')
         """
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             idx = 0
             lst = []
             res = _parse(str_e, mem, ignore)
@@ -434,10 +398,6 @@ class RDParser:
             return lst, str_e
         return parse
 
-
-    ################################
-    ## A+ : one or more
-    ################################
     @staticmethod
     def lst1(_parse):
         """
@@ -449,8 +409,8 @@ class RDParser:
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that applies the provided parsing
-        operation ('_parse') repeatedly at least once, returning a
+        This method returns a parsing function that applies the provided
+        parsing operation ('_parse') repeatedly at least once, returning a
         list of all matching results.
 
         Example:
@@ -459,7 +419,7 @@ class RDParser:
         >>> print(result)
         # Output: (['123', '456'], ' apples 456 oranges')
         """
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             idx = 0
             lst = []
             res = _parse(str_e, mem, ignore)
@@ -471,10 +431,6 @@ class RDParser:
             return None if not idx else lst, str_e
         return parse
 
-
-    ################################
-    ## Semantics action
-    ################################
     @staticmethod
     def act(_parse, act):
         """
@@ -482,14 +438,15 @@ class RDParser:
 
         Args:
         - _parse (function): The parsing operation to apply.
-        - act (function): A function to perform a semantics action on the result.
+        - act (function): A function to perform a semantics action on
+                            the result.
 
         Returns:
         function: A parsing function.
 
-        This method returns a parsing function that applies the provided parsing
-        operation ('_parse') and, if successful, performs a semantics action
-        using the 'act' function on the result.
+        This method returns a parsing function that applies the provided
+        parsing operation ('_parse') and, if successful, performs a
+        semantics action using the 'act' function on the result.
 
         Example:
         >>> def double_number(result):
@@ -499,17 +456,13 @@ class RDParser:
         >>> print(result)
         # Output: (246, ' apples')
         """
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             res = _parse(str_e, mem, ignore)
             if res:
                 return act(res[0]), res[1]
             return None
         return parse
 
-
-    ################################
-    ## Left recursion
-    ################################
     @staticmethod
     def grow(ide, _parser):
         """
@@ -526,16 +479,18 @@ class RDParser:
         the provided parsing operation ('_parser') using memoization.
 
         Example:
-        >>> left_recursive_parser = RDParser.grow("LR", RDParser.seq(RDParser.raw(lazy), RDParser.str("+"), RDParser.raw(left_recursive_parser)))
+        >>> left_recursive_parser = RDParser.grow("LR",
+                RDParser.seq(RDParser.raw(lazy), RDParser.str("+"),
+                RDParser.raw(left_recursive_parser)))
         >>> result = left_recursive_parser("1 + 2 + 3")
         >>> print(result)
         # Output: (['1', '+', '2', '+', '3'], '')
         """
 
-        def lazy(str_e, mem, ignore = None):
+        def lazy(str_e, mem, ignore=None):
             return ptr[0](str_e, mem, ignore)
 
-        def parse(str_e, mem, ignore = None):
+        def parse(str_e, mem, ignore=None):
             pos = len(str_e)
             uid = f"{ide}:{pos}"
             if uid in mem:

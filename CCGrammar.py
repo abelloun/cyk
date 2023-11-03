@@ -1,17 +1,19 @@
 """
 CCGrammar Module
 
-This module provides Python implementations for parsing, processing, and working with
-Combinatory Categorial Grammar (CCG) definitions. It defines several classes and functions
-for CCG manipulation.
+This module provides Python implementations for parsing, processing, and
+working with Combinatory Categorial Grammar (CCG) definitions.
+It defines several classes and functions for CCG manipulation.
 
 Classes:
-- `CCGrammar`: Represents a Combinatory Categorial Grammar (CCG) and provides methods
-  for parsing and processing CCG grammar definitions.
-- `Judgement`: Represents a judgment in a CCG, including expression, type, semantics, and
-  derivation information.
-- `Alias`: Represents an alias definition in a CCG, including the key and its associated value.
-- `Weight`: Represents a combinator weight in a CCG, associated with premises and a weight value.
+- `CCGrammar`: Represents a Combinatory Categorial Grammar (CCG) and provides
+                methods for parsing and processing CCG grammar definitions.
+- `Judgement`: Represents a judgment in a CCG, including expression, type,
+                semantics, and derivation information.
+- `Alias`: Represents an alias definition in a CCG, including the key and
+            its associated value.
+- `Weight`: Represents a combinator weight in a CCG, associated with premises
+            and a weight value.
 - `ParseError`: An exception raised for errors in the parsing of CCG grammars.
 - Several other helper classes related to CCG types, lambda terms, and more.
 
@@ -33,9 +35,12 @@ from functools import reduce
 from itertools import product
 from RDParser import RDParser as rd
 from CCGExprs import CCGExprString
-from CCGTypes import CCGType, CCGTypeVar, CCGTypeAtomic, CCGTypeComposite, CCGTypeAnnotation
+from CCGTypes import (CCGType, CCGTypeVar, CCGTypeAtomic, CCGTypeComposite,
+                      CCGTypeAnnotation)
 from CCGLambdas import (LambdaTermVar, LambdaTermBinop, LambdaTermPredicate,
-                       LambdaTermApplication, LambdaTermLambda, LambdaTermExists)
+                        LambdaTermApplication, LambdaTermLambda,
+                        LambdaTermExists)
+
 
 class ParseError(Exception):
     """Exception raised for errors in the parsing.
@@ -45,17 +50,16 @@ class ParseError(Exception):
         message -- explanation of the error
     """
 
-    def __init__(self, grammar, message="There was a parsing error on the grammar"):
-        self.grammar = grammar
-        self.message = message
+    def __init__(self, gram, msg="There was a parsing error on the grammar"):
+        self.grammar = gram
+        self.message = msg
         super().__init__(self.message)
 
-################################################
-## Some basic helper definitions
-################################################
+
 def sel(idx, parse):
     """
-    Select and return a specific element from the result of a parsing operation.
+    Select and return a specific element from the result of a
+    parsing operation.
 
     Args:
     - idx (int): The index of the element to select from the parsing result.
@@ -64,9 +68,10 @@ def sel(idx, parse):
     Returns:
     Any: The selected element from the parsing result.
 
-    This function takes an index (`idx`) and a parsing operation (`parse`) as input.
-    It then applies the parsing operation and returns the element at the specified
-    index from the result.
+    This function takes an index (`idx`) and a parsing operation (`parse`)
+    as input.
+    It then applies the parsing operation and returns the element at the
+    specified index from the result.
 
     Example:
     >>> result = sel(1, rd.seq("Hello", "World"))("Hello World")
@@ -74,6 +79,7 @@ def sel(idx, parse):
     # Output: 'World'
     """
     return rd.act(parse, lambda x: x[idx])
+
 
 Identifier = rd.rgx("[a-zA-Zéèêà_][a-zA-Zéèêà_0-9]*")
 Integer = rd.rgx("[0-9]+")
@@ -89,7 +95,6 @@ CCGTypeParser = rd.grow("type", lambda type: rd.alt(
     rd.act(Identifier, CCGTypeAtomic),
 ))
 
-
 LambdaTermParser = rd.grow('expr', lambda expr: rd.alt(
     rd.act(rd.seq(expr, rd.str(" "), expr), lambda x: LambdaTermApplication(x[0], x[2])),
     rd.act(rd.seq(expr, rd.rgx("\\+|\\&|\\|"), expr), lambda x: LambdaTermBinop(x[1], x[0], x[2])),
@@ -101,24 +106,22 @@ LambdaTermParser = rd.grow('expr', lambda expr: rd.alt(
 ))
 
 
-
-####################################
-## Judgement ( CCGExpr => CCGType )
-####################################
 class Judgement:
     """
     Represents a judgment in a Combinatory Categorial Grammar (CCG).
 
-    This class provides a representation for a judgment, including the expression,
-     type, semantics, and derivation information. It offers methods for displaying
-     the judgment, expanding it with new values, matching it with another judgment,
-     replacing values, and deriving new judgments.
+    This class provides a representation for a judgment, including the
+    expression, type, semantics, and derivation information.
+    It offers methods for displaying the judgment, expanding it with new
+    values, matching it with another judgment, replacing values,
+    and deriving new judgments.
 
     Attributes:
     - expr (CCGExprString): The expression of the judgment.
     - type (CCGTypeParser): The type of the judgment.
     - cpt (int): A counter for the judgment.
-    - sem (Optional[CCGTypeParser]): The semantics associated with the judgment.
+    - sem (Optional[CCGTypeParser]): The semantics associated with the
+                                     judgment.
     - derivation (list): Information about the derivation of the judgment.
 
     Methods:
@@ -126,8 +129,8 @@ class Judgement:
     - expand(name, type): Expand the judgment with a new name and type.
     - match(data, sigma): Match the judgment with another judgment.
     - replace(sigma): Replace values in the judgment based on a substitution.
-    - deriving(combinator, sigma, judmts, sem=None): Derive new judgments based on
-    combinator, substitution, and input judgments.
+    - deriving(combinator, sigma, judmts, sem=None): Derive new judgments
+            based on combinator, substitution, and input judgments.
 
     Example:
     >>> expr = CCGExprString("your_expression")
@@ -137,19 +140,20 @@ class Judgement:
     >>> new_judgment = judgment.expand("new_name", CCGTypeParser("new_type"))
     >>> result = judgment.match(new_judgment, sigma)
     >>> replaced_judgment = judgment.replace(sigma)
-    >>> new_judgments = judgment.deriving("combinator", sigma, [judgment1, judgment2],
+    >>> new_judgments = judgment.deriving("combinator", sigma,
+                                          [judgment1, judgment2],
                                            sem=CCGTypeParser("new_semantics"))
     """
-    def __init__(self, expr, type_judg, sem = None, derivation = None, weight = 1):
+    def __init__(self, expr, type_judg, sem=None, derivation=None, weight=1):
         """
-        Initialize a Judgement object with the provided expression, type, semantics,
-        and derivation information.
+        Initialize a Judgement object with the provided expression, type,
+        semantics, and derivation information.
 
         Args:
         - expr (CCGExprString): The expression of the judgment.
         - type (CCGTypeParser): The type of the judgment.
-        - sem (Optional[CCGTypeParser]): The semantics associated with the judgment
-                                        (default is None).
+        - sem (Optional[CCGTypeParser]): The semantics associated with the
+                                        judgment (default is None).
         - derivation (Optional[list]): Information about the derivation of the
         judgment (default is a list with weight and empty derivation).
         - weight (int): The weight associated with the judgment (default is 1).
@@ -160,13 +164,13 @@ class Judgement:
         >>> judgment = Judgement(expr, type, sem=CCGTypeParser("semantics"))
         """
         self.expr = expr
-        self.type    = type_judg
+        self.type = type_judg
         self.cpt = 0
         self.sem = sem
         self.derivation = derivation if derivation else [{"weight": weight,
                                                           "derivation": []}]
 
-    def show(self, printsem = False):
+    def show(self, printsem=False):
         """
         Generate a string representation of the judgment.
 
@@ -195,10 +199,11 @@ class Judgement:
         Judgement: A new Judgement object with the expanded name and type.
 
         Example:
-        >>> new_judgment = judgment.expand("new_name", CCGTypeParser("new_type"))
+        >>> new_judgment = judgment.expand("new_name",
+                                           CCGTypeParser("new_type"))
         """
         ex = self.type.expand(name, type_judg)
-        return Judgement(self.expr, ex, sem = self.sem, derivation = self.derivation)
+        return Judgement(self.expr, ex, sem=self.sem, derivation=self.derivation)
 
     def match(self, data, sigma):
         """
@@ -209,15 +214,16 @@ class Judgement:
         - sigma (Substitution): The substitution to apply during matching.
 
         Returns:
-        Union[None, bool]: True if the judgments match, None if no match is found.
+        Union[None, bool]: True if the judgments match, None if no
+                           match is found.
 
         Example:
         >>> result = judgment.match(new_judgment, sigma)
         """
         if not self.expr.match(data.expr, sigma):
             return None
-        #~ if not self.type.match(data.type, sigma):
-            #~ return None
+        # ~ if not self.type.match(data.type, sigma):
+            # ~ return None
         if not CCGType.unify(self.type, data.type, sigma):
             return None
         return True
@@ -238,45 +244,49 @@ class Judgement:
         """
         exp = self.expr.replace(sigma)
         typ = self.type.replace(sigma)
-        return Judgement(exp, typ, sem = self.sem, derivation = self.derivation)
+        der = self.derivation
+        return Judgement(exp, typ, sem=self.sem, derivation=der)
 
     def deriving(self, combinator, sigma, judmts, sem=None):
         """
-        Derive new judgments based on combinator, substitution, and input judgments.
+        Derive new judgments based on combinator, substitution, and input
+        judgments.
 
         Args:
         - combinator (str): The combinator used for derivation.
         - sigma (Substitution): The substitution to apply during derivation.
         - judmts (list): List of input judgments to derive new judgments.
-        - sem (Optional[CCGTypeParser]): The semantics associated with the derived
-                                         judgments (default is None).
+        - sem (Optional[CCGTypeParser]): The semantics associated with the
+                                        derived judgments (default is None).
 
         Returns:
-        Judgement: The current Judgement object with updated derivation and semantics.
+        Judgement: The current Judgement object with updated derivation
+                    and semantics.
 
         Example:
         >>> new_judgments = judgment.deriving("combinator", sigma,
-                        [judgment1, judgment2], sem=CCGTypeParser("new_semantics"))
+                                            [judgment1, judgment2],
+                                            sem=CCGTypeParser("new_semantics"))
         """
         self.derivation = []
         derivations_list = [judgment.derivation for judgment in judmts]
         for derivations in product(*derivations_list):
-            total_weight = max(derivation["weight"] for derivation in derivations)
-            der = {"weight": total_weight, "derivation": [combinator, sigma, judmts]}
+            tt_weight = max(derv["weight"] for derv in derivations)
+            pst = [combinator, sigma, judmts]
+            der = {"weight": tt_weight, "derivation": pst}
             self.derivation.append(der)
         self.sem = sem
         return self
 
 
-####################################
-## Alias ( CCGType :: CCGType )
-####################################
 class Alias:
     """
     Represents an alias definition in a Combinatory Categorial Grammar (CCG).
 
-    This class provides a representation for an alias, including its key and value.
-    It also offers methods for displaying the alias and expanding it with new values.
+    This class provides a representation for an alias, including its key and
+    value.
+    It also offers methods for displaying the alias and expanding it with
+    new values.
 
     Attributes:
     - key (str): The alias key.
@@ -289,7 +299,8 @@ class Alias:
     Example:
     >>> alias = Alias("AliasName", CCGTypeParser("AliasValue"))
     >>> print(alias.show())
-    >>> new_alias = alias.expand("NewAliasName", CCGTypeParser("NewAliasValue"))
+    >>> new_alias = alias.expand("NewAliasName",
+                                 CCGTypeParser("NewAliasValue"))
     """
 
     def __init__(self, key, value):
@@ -311,7 +322,8 @@ class Alias:
         Generate a string representation of the alias.
 
         Returns:
-        str: A string representation of the alias in the format "key = value.show()".
+        str: A string representation of the alias in the format
+             "key = value.show()".
 
         Example:
         >>> alias = Alias("AliasName", CCGTypeParser("AliasValue"))
@@ -332,29 +344,29 @@ class Alias:
 
         Example:
         >>> alias = Alias("AliasName", CCGTypeParser("AliasValue"))
-        >>> new_alias = alias.expand("NewAliasName", CCGTypeParser("NewAliasValue"))
+        >>> new_alias = alias.expand("NewAliasName",
+                                     CCGTypeParser("NewAliasValue"))
         """
         return Alias(self.key, self.value.expand(key, value))
 
 
-################################################
-## Weight function
-################################################
 class Weight:
     """
     Represents a combinator weight in a Combinatory Categorial Grammar (CCG).
 
-    This class provides a representation for a combinator weight, including its combinator
-    name, premises, and the weight value. It also offers a method for matching
-    weights in the grammar.
+    This class provides a representation for a combinator weight, including
+    its combinator name, premises, and the weight value. It also offers a
+    method for matching weights in the grammar.
 
     Attributes:
-    - combinator_name (str): The name of the combinator associated with the weight.
+    - combinator_name (str): The name of the combinator associated
+                            with the weight.
     - premises (list): A list of premises for the weight.
     - weight (float): The weight value.
 
     Methods:
-    - match(combinator, sigma): Match this weight against a combinator and sigma.
+    - match(combinator, sigma): Match this weight against a combinator
+                                and sigma.
 
     Example:
     >>> weight = Weight("combinator_name", ["Premise1", "Premise2"], 0.5)
@@ -362,10 +374,12 @@ class Weight:
     """
     def __init__(self, combinator_name, premices, weight):
         """
-        Initialize a Weight object with the provided combinator name, premises, and weight.
+        Initialize a Weight object with the provided combinator name, premises,
+        and weight.
 
         Args:
-        - combinator_name (str): The name of the combinator associated with the weight.
+        - combinator_name (str): The name of the combinator associated with
+                                the weight.
         - premices (list): A list of premises for the weight.
         - weight (float): The weight value.
 
@@ -385,16 +399,17 @@ class Weight:
         - sigma (list): The sigma list.
 
         Returns:
-        - bool: True if the weight matches the combinator and sigma; False otherwise.
+        - bool: True if the weight matches the combinator and sigma;
+                False otherwise.
 
         Example:
         >>> weight = Weight("combinator_name", ["Premise1", "Premise2"], 0.5)
         >>> result = weight.match("SomeCombinator", ["Premise1", "Premise2"])
         >>> print(result)
         """
-        #~ if len(self.premices) == len(premices):
-            #~ for (l, r) in zip(self.premices, premices):
-                #~ if not (l == r):
+        # ~ if len(self.premices) == len(premices):
+        #     ~ for (l, r) in zip(self.premices, premices):
+        #         ~ if not (l == r):
 
 
 WeightParser = rd.act(
@@ -410,19 +425,15 @@ WeightParser = rd.act(
     lambda x: Weight(x[2], x[3], x[6])
 )
 
-################################################
-## Grammar (Parser + Constructor + Printer)
-## self is not the CKY parser, instead it
-## is for parsing the grammar rules for the CKY
-################################################
+
 class CCGrammar:
     """
     Represents a Combinatory Categorial Grammar (CCG) and provides methods for
     parsing and processing CCG grammar definitions.
 
-    This class allows you to create a CCGrammar object from a string representation
-     of the grammar, parse the grammar, and perform operations such as expanding
-     aliases, displaying the grammar, and more.
+    This class allows you to create a CCGrammar object from a string
+    representation of the grammar, parse the grammar, and perform operations
+    such as expanding aliases, displaying the grammar, and more.
 
     Attributes:
     - axioms (dict): A dictionary of axioms and their type expressions.
@@ -432,12 +443,18 @@ class CCGrammar:
     - terminal (str): The terminal axiom.
 
     Methods:
-    - parse(grammar_str): Parse a CCGrammar definition string and return a list of statements.
-    - __init__(str_gram): Initialize a CCGrammar object from a string representation of the grammar.
-    - process_axioms(axioms): Process and store axioms from the grammar definition.
-    - process_alias(alias): Process and store an alias definition from the grammar.
-    - process_judgment(judgment): Process and store a judgment from the grammar.
-    - process_weight(weight): Process and store a weight definition from the grammar.
+    - parse(grammar_str): Parse a CCGrammar definition string and return a
+                          list of statements.
+    - __init__(str_gram): Initialize a CCGrammar object from a string
+                            representation of the grammar.
+    - process_axioms(axioms): Process and store axioms from the grammar
+                                definition.
+    - process_alias(alias): Process and store an alias definition from
+                            the grammar.
+    - process_judgment(judgment): Process and store a judgment from
+                                    the grammar.
+    - process_weight(weight): Process and store a weight definition from
+                                the grammar.
     - expand_aliases(): Expand aliases in the grammar.
     - show(): Generate a string representation of the CCGrammar object.
     """
@@ -449,7 +466,7 @@ class CCGrammar:
     lmbda = sel(1, rd.seq(rd.str("{"), LambdaTermParser, rd.str("}")))
     judgm = rd.act(
         rd.seq(rd.rgx("[^\\s]+"), rd.str("=>"), weight, CCGTypeParser, rd.mbe(lmbda)),
-        lambda x: {"judgm": Judgement(CCGExprString(x[0]), x[3], weight = x[2], sem = x[4])}
+        lambda x: {"judgm": Judgement(CCGExprString(x[0]), x[3], weight=x[2], sem=x[4])}
     )
     weightRule = rd.act(WeightParser, lambda x: {"weight": x})
     comment = rd.act(rd.seq(rd.str("#"), rd.rgx(".*")), lambda x: None)
@@ -469,8 +486,8 @@ class CCGrammar:
         Raises:
         - ParseError: If the parsing of the grammar string fails.
 
-        This class method parses a CCGrammar definition string and returns a list
-        of statements, including axioms, aliases, judgments, and weights.
+        This class method parses a CCGrammar definition string and returns a
+        list of statements, including axioms, aliases, judgments, and weights.
         If the parsing fails, it raises a `ParseError` exception.
 
         Example usage:
@@ -486,13 +503,15 @@ class CCGrammar:
 
     def __init__(self, str_gram):
         """
-        Initialize a CCGrammar object from a string representation of the grammar.
+        Initialize a CCGrammar object from a string representation of the
+        grammar.
 
         Args:
         - str_gram (str): A string containing the CCGrammar definition.
 
-        This method parses the provided string representation of the grammar and
-        initializes the CCGrammar object with axioms, aliases, rules, and weights.
+        This method parses the provided string representation of the grammar
+        and initializes the CCGrammar object with axioms, aliases, rules,
+        and weights.
 
         Example usage:
         >>> grammar = CCGrammar("Your CCGrammar Definition Here")
@@ -561,7 +580,8 @@ class CCGrammar:
         Process and store a judgment from the grammar.
 
         Args:
-        - judgment (Judgment): A Judgment object representing a judgment definition.
+        - judgment (Judgment): A Judgment object representing a judgment
+                                definition.
 
         This method processes and stores judgment definitions from the grammar.
 
@@ -607,8 +627,6 @@ class CCGrammar:
             for (rulk, rulvs) in self.rules.items():
                 self.rules[rulk] = [r.expand(alv.key, alv.value) for r in rulvs]
 
-
-
     def show(self):
         """
         Generate a string representation of the CCGrammar object.
@@ -630,7 +648,8 @@ class CCGrammar:
         "word1": typeofword1
         "word2": typeofword2
         """
+        srule = [f"{r.show()}" for rl in self.rules.values() for r in rl]
+        rules = "\n".join(srule)
         axioms = ":- " + ", ".join(self.axioms.keys())
         aliases = "\n".join([v.show() for v in self.aliases.values()])
-        rules = "\n".join([f"{r.show()}" for rl in self.rules.values() for r in rl])
         return "\n".join([axioms, aliases, rules])

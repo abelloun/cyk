@@ -1,14 +1,17 @@
 """
 CCG Parser Example
 
-This module demonstrates parsing text using Combinatory Categorial Grammar (CCG).
+This module demonstrates parsing text using
+Combinatory Categorial Grammar (CCG).
 It defines a CCG grammar and provides a function to parse a given text input
 using the defined grammar rules.
-The parsing results are displayed for each sentence, and the module measures the time taken for
-parsing and counts the total number of successful parses.
+The parsing results are displayed for each sentence, and the module measures
+the time taken for parsing and counts the total number of successful parses.
 
-To use this module, you can provide your own CCG grammar rules and sample text data.
-The `run` function parses the text using the specified grammar and displays the results.
+To use this module, you can provide your own CCG grammar rules and sample
+text data.
+The `run` function parses the text using the specified grammar and displays
+the results.
 
 Example usage:
 run(TXT_SAMPLE, GRAMMAR)
@@ -249,10 +252,12 @@ TXT_SAMPLE = '''
     La souris mange paisiblement paisiblement un rat
 '''
 
-TXT_TEST='''
+TXT_TEST = '''
 Le chat de mon voisin dort
 Le chat de la sœur de mon voisin dort
 '''
+
+
 def run(txt, grammar):
     """
     Parse a text input using Combinatory Categorial Grammar (CCG).
@@ -263,7 +268,8 @@ def run(txt, grammar):
 
     This function parses the input text using Combinatory Categorial Grammar
     (CCG) rules and displays the parsing results for each sentence. It measures
-     the time taken for parsing and counts the total number of successful parses.
+    the time taken for parsing and counts the total number of
+    successful parses.
 
     Example usage:
     run("John loves Mary.\nShe sings a song.")
@@ -274,13 +280,15 @@ def run(txt, grammar):
     ccg = CCGrammar(grammar)
     cpt = 0
     print(ccg.show())
-    # Split the input 'txt' by newline characters to process each sentence separately.
+    # Split the input 'txt' by newline characters to
+    # process each sentence separately.
     for sentence in (str1.strip() for str1 in txt.split("\n") if str1.strip()):
         # Print the sentence being parsed.
-        #print("#############################################################")
-        #print(f"# Parsing of: \"{sentence}\":")
-        #print("#############################################################\n")
-        # Use the CCGCKYParser to parse the current sentence, setting 'use_typer' to False.
+        # print("##########################################################")
+        # print(f"# Parsing of: \"{sentence}\":")
+        # print("##########################################################\n")
+        # Use the CCGCKYParser to parse the current sentence,
+        # setting 'use_typer' to False.
         parses = CCGCKYParser(ccg, sentence, use_typer=False)
         cpt_n = 0
 
@@ -290,7 +298,7 @@ def run(txt, grammar):
                 print(parse.show(sem=True))
                 print(parse.current.expr.show(), parse.current.sem.show())
                 cpt_n += 1
-                #break
+                # break
         else:
             # Handle cases where parsing fails.
             print(f"@@@@@@@@@@@@ FAIL on ::: {sentence} @@@@@@@@@@@@\n")
@@ -302,5 +310,6 @@ def run(txt, grammar):
 
     # Display the total count of successful parses.
     print("CPT TOTAL", cpt)
+
 
 run(TXT_SAMPLE, GRAMMAR)

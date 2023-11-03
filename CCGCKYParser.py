@@ -1,18 +1,20 @@
 """
 CCG Expressions
 
-This module defines classes and functions for working with Combinatory Categorial
-Grammar (CCG) expressions and parsing.
+This module defines classes and functions for working with Combinatory
+Categorial Grammar (CCG) expressions and parsing.
 It provides classes for representing CCG expressions, inference rules,
 and CKY derivations.
 
 Classes:
-- TokenError: Exception raised for errors related to unrecognized tokens in CCG parsing.
-- Inference: Represents an inference rule in a logical system. An inference rule
-             consists of a name, a list of hypotheses (premises), a conclusion,
-             an optional semantic function, and an optional helper function.
-             This class also provides methods for matching the rule with data and
-             replacing variables using a substitution dictionary.
+- TokenError: Exception raised for errors related to unrecognized tokens in
+              CCG parsing.
+- Inference: Represents an inference rule in a logical system.
+             An inference rule consists of a name, a list of hypotheses
+             (premises), a conclusion, an optional semantic function,
+             and an optional helper function.
+             This class also provides methods for matching the rule with data
+             and replacing variables using a substitution dictionary.
 - CKYDerivation: Represents a derivation in the CKY parsing algorithm. This
                  class is used to construct parse trees and is part of the
                  CCG CKY parser.
@@ -22,9 +24,11 @@ Functions:
                 (CCG) and CKY parsing. It takes a CCG grammar, an input string,
                 and an optional flag to enable type-raising, and returns a list
                 of reconstructed CKY derivations.
-- compute_chart: Computes the chart of valid derivations for a given span of input.
+- compute_chart: Computes the chart of valid derivations for a given span of
+                 input.
 - reconstruct: Reconstructs CKY derivations from judgements.
-- add_combinations : Add valid combinations of combinators to the current chart.
+- add_combinations : Add valid combinations of combinators to the current
+                    chart.
 
 Example:
 >>> ccg = CCGGrammar(...)
@@ -35,13 +39,14 @@ Example:
 [CKYDerivation(parse1), CKYDerivation(parse2), ...]
 
 Raises:
-- TokenError: If a token in the input string is not recognized in the CCG grammar.
+- TokenError: If a token in the input string is not recognized in the
+              CCG grammar.
 """
-
 from CCGrammar import Judgement
 from CCGLambdas import LambdaTermVar, LambdaTermApplication, LambdaTermLambda
 from CCGTypes import CCGTypeVar, CCGTypeComposite, CCGTypeAtomicVar
 from CCGExprs import CCGExprVar, CCGExprConcat
+
 
 class TokenError(Exception):
     """
@@ -66,15 +71,17 @@ class TokenError(Exception):
         self.message = message + "\"{token}\""
         super().__init__(self.message)
 
+
 ####################################
-## Inference Class
+# Inference Class
 ####################################
 class Inference:
     """
     Represents an inference rule in a logical system.
 
     An inference rule consists of a name, a list of hypotheses (premises),
-    a conclusion, an optional semantic function, and an optional helper function.
+    a conclusion, an optional semantic function, and an optional helper
+    function.
 
     Args:
     - name (str): The name of the inference rule.
@@ -87,10 +94,10 @@ class Inference:
     Methods:
     - __str__(): Returns a string representation of the inference rule.
     - show(): Returns a formatted string representation of the inference rule.
-    - match(data): Matches the inference rule with given data, updating variable
-                   substitutions.
-    - replace(sigma): Replaces variables in the inference rule using a substitution
-                     dictionary.
+    - match(data): Matches the inference rule with given data, updating
+                    variable substitutions.
+    - replace(sigma): Replaces variables in the inference rule using a
+                        substitution dictionary.
 
     Example:
     >>> hyp1 = CCGExprVar("X")
@@ -102,7 +109,7 @@ class Inference:
     [ X, "apple" ] -- Example Rule --> Y
     """
 
-    def __init__(self, name, hyps, concl, sem = None, helper = None):
+    def __init__(self, name, hyps, concl, sem=None, helper=None):
         """
         Initialize an inference rule with a name, hypotheses, a conclusion,
         and optional functions.
@@ -153,13 +160,13 @@ class Inference:
         [ X, "apple" ] -- Example Rule --> Y
         """
 
-        def center(w, l):
+        def center(width, length):
             """
             Center a string within a given width.
 
             Args:
-            - w (int): The width to center within.
-            - l (int): The length of the string to be centered.
+            - wwidth (int): The width to center within.
+            - length (int): The length of the string to be centered.
 
             Returns:
             str: A string of spaces for centering.
@@ -169,7 +176,7 @@ class Inference:
             >>> print("|" + centered + "text" + centered + "|")
             |   text   |
             """
-            return " " * max(0, (w - l)// 2)
+            return " " * max(0, (width - length)//2)
 
         up = ""
         down = self.concl.show()
@@ -181,20 +188,23 @@ class Inference:
         ldn = len(down)
         wdt = max(ldn, lup)
         rep = "-" * wdt
-        xxx = " " * (wdt - ldn + 1 - max(0, (wdt - ldn)// 2))
+        xxx = " " * (wdt - ldn + 1 - max(0, (wdt - ldn)//2))
         name = self.name
-        return f"{center(wdt, lup)}{up}\n{rep}{name}\n{center(wdt, ldn)}{down}{xxx}"
+        ctr = center(wdt, ldn)
+        return f"{center(wdt, lup)}{up}\n{rep}{name}\n{ctr}{down}{xxx}"
 
     def match(self, data):
         """
-        Matches the inference rule with given data, updating variable substitutions.
+        Matches the inference rule with given data, updating variable
+        substitutions.
 
         Args:
         - data (list): A list of CCG expressions to match with the hypotheses.
 
         Returns:
         InferenceResult or None: An InferenceResult object if the data matches
-                                the inference rule, or None if there is no match.
+                                the inference rule, or None if there is no
+                                match.
 
         Example:
         >>> data = [CCGExprVar("X"), CCGExprString("apple")]
@@ -205,7 +215,6 @@ class Inference:
         for (pat, dat) in zip(hyps, data):
             pat = pat.replace(sigma)
             dat = dat.replace(sigma)
-            #print(pat.type, dat.type, sigma)
             if not pat.match(dat, sigma):
                 return None
         sem = None
@@ -215,14 +224,15 @@ class Inference:
 
     def replace(self, sigma):
         """
-        Replaces variables in the inference rule using a substitution dictionary.
+        Replaces variables in the inference rule using a substitution
+        dictionary.
 
         Args:
         - sigma (dict): A dictionary of variable substitutions.
 
         Returns:
-        Inference: A new Inference object with variables replaced using the given
-                    substitution.
+        Inference: A new Inference object with variables replaced using the
+                    given substitution.
 
         Example:
         >>> substitution = {"X": CCGExprString("fruit")}
@@ -232,32 +242,38 @@ class Inference:
         concl_rep = self.concl.replace(sigma)
         return Inference(self.name, hyps_rep, concl_rep, self.sem)
 
+
 ####################################
-## Concrete Inferences Rules (aka Combinators)
+# Concrete Inferences Rules (aka Combinators)
 ####################################
 # """
 # ApplicationLeft Combinator.
 #
-# self combinator applies the '<' operator for CCG expressions, which represents
-# a left application operation in Combinatory Categorial Grammar (CCG).
+# self combinator applies the '<' operator for CCG expressions, which
+# represents a left application operation in Combinatory Categorial
+# Grammar (CCG).
 #
 # Judgements:
 # - Input: Judgement of 'b' with type 'Y' and judgement of 'a' with type 'X/Y'.
 # - Output: Judgement of 'b a' with type 'X'.
 #
 # Semantics:
-# - Applies a semantic function to combine the semantics of 'a' and 'b' if they exist.
+# - Applies a semantic function to combine the semantics of 'a' and 'b' if they
+# exist.
 #
 # Example:
-# >>> app_left = ApplicationLeft.match([Judgement(CCGExprVar("b"), CCGTypeVar("Y")),
-#     Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"), CCGTypeVar("Y"))])
+# >>> app_left = ApplicationLeft.match([Judgement(CCGExprVar("b"),
+#                                                 CCGTypeVar("Y")),
+#     Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"),
+#                                                    CCGTypeVar("Y"))])
 # >>> print(app_left)
 # Judgement(CCGExprConcat(CCGExprVar("b"), CCGExprVar("a")), CCGTypeVar("X"))
 # """
 ApplicationLeft = Inference("<",
     [
         Judgement(CCGExprVar("b"), CCGTypeVar("Y")),
-        Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"), CCGTypeVar("Y")))
+        Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"),
+                                                       CCGTypeVar("Y")))
     ],
     Judgement(
         CCGExprConcat(CCGExprVar("b"), CCGExprVar("a")),
@@ -282,15 +298,16 @@ ApplicationLeft = Inference("<",
 #
 # Example:
 # >>> app_right = ApplicationRight.match([Judgement(CCGExprVar("a"),
-#                                                     CCGTypeComposite(1, CCGTypeVar("X"),
-#                                                                         CCGTypeVar("Y")),
-#                                         Judgement(CCGExprVar("b"), CCGTypeVar("Y"))
+#                                                   CCGTypeComposite(1, CCGTypeVar("X"),
+#                                                                       CCGTypeVar("Y")),
+#                                         Judgement(CCGExprVar("b"), CCGTypeVar("Y"))])
 # >>> print(app_right)
 # Judgement(CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")), CCGTypeVar("X"))
 # """
 ApplicationRight = Inference(">",
     [
-        Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("X"), CCGTypeVar("Y"))),
+        Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("X"),
+                                                       CCGTypeVar("Y"))),
         Judgement(CCGExprVar("b"), CCGTypeVar("Y"))
     ],
     Judgement(
@@ -416,9 +433,9 @@ TypeRaisingRight = Inference("T<",
 # """
 TypeRaisingLeft = Inference("T>",
     [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
-    Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeVar("X")))),
-    lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None,
-    lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
+     Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeVar("X")))),
+     lambda data: LambdaTermLambda("f", LambdaTermApplication(LambdaTermVar("f"), data[0].sem)) if data[0].sem else None,
+     lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
 )
 
 
@@ -596,7 +613,6 @@ class CKYDerivation:
         return self.sub_show(sem=sem)[0]
 
 
-
 def add_combinations(combinators, left, right, current_chart):
     """
     Add valid combinations of combinators to the current chart.
@@ -625,6 +641,7 @@ def add_combinations(combinators, left, right, current_chart):
         if result:
             current_chart.add(result)
     return current_chart
+
 
 def compute_chart(combinators, chart, span, start, use_typer=False):
     """
@@ -675,6 +692,7 @@ def compute_chart(combinators, chart, span, start, use_typer=False):
 
     return current_chart
 
+
 def reconstruct(parses):
     """
     Reconstruct CKY derivations from judgements.
@@ -702,10 +720,6 @@ def reconstruct(parses):
     return result
 
 
-
-####################################
-## CCG CKY Parser
-####################################
 def CCGCKYParser(ccg, input_string, use_typer=False):
     """
     Parse a given input string using Combinatory Categorial Grammar (CCG) and CKY parsing.

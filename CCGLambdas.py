@@ -1,13 +1,15 @@
 """
 Lambda Terms and Lambda Calculus Parser
 
-This module provides classes and functions for working with lambda calculus terms,
-including lambda abstractions, variable terms, binary operations, predicate applications,
-and existential quantifications. It also offers methods for parsing, displaying, evaluating,
+This module provides classes and functions for working with lambda
+calculus terms, including lambda abstractions, variable terms,
+binary operations, predicate applications, and existential quantifications.
+It also offers methods for parsing, displaying, evaluating,
 and applying lambda terms within the context of lambda calculus.
 
 Classes:
-- `LambdaTerm`: The base class for lambda calculus terms, offering common functionality.
+- `LambdaTerm`: The base class for lambda calculus terms, offering common
+                functionality.
 - `LambdaTermVar`: Represents a variable lambda term.
 - `LambdaTermBinop`: Represents a binary operation between two lambda terms.
 - `LambdaTermPredicate`: Represents a predicate application term.
@@ -16,7 +18,8 @@ Classes:
 - `LambdaTermExists`: Represents an existential quantification term.
 
 Functions:
-- `show_compact`: Utilitary to generate a compact string representation of a lambda term.
+- `show_compact`: Utilitary to generate a compact string representation
+                    of a lambda term.
 
 Example:
     >>> var = "x"
@@ -27,19 +30,18 @@ Example:
     >>> result = exists_term.apply(arg)
     >>> result_predicate = exists_term.apply_predicate(args)
 """
-################################################
-## Lambda Terms for the denotation
-## and parser for lambda terms
-################################################
+
+
 class LambdaTerm:
     """
     Base class for lambda calculus terms.
 
-    This class serves as the base class for various lambda calculus terms and provides
-    common functionality for lambda terms.
+    This class serves as the base class for various lambda calculus terms
+    and provides common functionality for lambda terms.
 
     Class Attributes:
-    - count (int): A class-level counter used for generating fresh variable names.
+    - count (int): A class-level counter used for generating fresh
+                    variable names.
 
     Example:
     >>> term = LambdaTerm()
@@ -51,8 +53,8 @@ class LambdaTerm:
         """
         Generate a fresh variable name based on the input variable.
 
-        This method generates a fresh variable name by appending a unique number
-        to the base variable name.
+        This method generates a fresh variable name by appending a
+        unique number to the base variable name.
 
         Args:
         - var (str): The base variable name.
@@ -72,20 +74,21 @@ class LambdaTerm:
         """
         Reset the class-level counter for generating fresh variable names.
 
-        This method resets the class-level counter to its initial state, allowing
-        fresh variable names to be generated from scratch.
+        This method resets the class-level counter to its initial state,
+        allowing fresh variable names to be generated from scratch.
 
         Example:
         >>> LambdaTerm.reset()
         """
         cls.count = -1
 
+
 class LambdaTermVar(LambdaTerm):
     """
     Represents a variable lambda term.
 
-    This class defines a lambda term that represents a variable. It can be used in
-     lambda calculus expressions and can be evaluated in an environment.
+    This class defines a lambda term that represents a variable. It can be
+    used in lambda calculus expressions and can be evaluated in an environment.
 
     Args:
     - name (str): The name of the variable.
@@ -145,8 +148,8 @@ class LambdaTermVar(LambdaTerm):
         - arg (LambdaTerm): The argument lambda term to apply.
 
         Returns:
-        LambdaTermApplication: A new lambda term representing the application of
-        the variable to the argument.
+        LambdaTermApplication: A new lambda term representing the application
+        of the variable to the argument.
 
         Example:
         >>> variable = LambdaTermVar("x")
@@ -163,8 +166,8 @@ class LambdaTermVar(LambdaTerm):
         - args (list): A list of additional predicate arguments.
 
         Returns:
-        LambdaTermPredicate: A new lambda term representing the application of the
-        variable as a predicate with additional arguments.
+        LambdaTermPredicate: A new lambda term representing the application
+        of the variable as a predicate with additional arguments.
 
         Example:
         >>> variable = LambdaTermVar("x")
@@ -179,7 +182,8 @@ class LambdaTermBinop(LambdaTerm):
     Represents a binary operation between two lambda terms.
 
     This class defines a lambda term that represents a binary operation between
-    two other lambda terms. It allows the evaluation and application of binary operations.
+    two other lambda terms.
+    It allows the evaluation and application of binary operations.
 
     Args:
     - op (str): The binary operation symbol.
@@ -194,7 +198,8 @@ class LambdaTermBinop(LambdaTerm):
 
     def __init__(self, op, left, right):
         """
-        Initialize a LambdaTermBinop object with a binary operation and two operands.
+        Initialize a LambdaTermBinop object with a binary operation
+        and two operands.
 
         Args:
         - op (str): The binary operation symbol.
@@ -238,7 +243,9 @@ class LambdaTermBinop(LambdaTerm):
         >>> binop = LambdaTermBinop("+", left_operand, right_operand)
         >>> result = binop.eval(env)
         """
-        return LambdaTermBinop(self.op, self.left.eval(env), self.right.eval(env))
+        leval = self.left.eval(env)
+        reval = self.right.eval(env)
+        return LambdaTermBinop(self.op, leval, reval)
 
     def apply(self, arg):
         """
@@ -248,7 +255,8 @@ class LambdaTermBinop(LambdaTerm):
         - arg (LambdaTerm): The argument lambda term to apply.
 
         Returns:
-        LambdaTermBinop: A new binary operation with the added argument applied to both operands.
+        LambdaTermBinop: A new binary operation with the added argument applied
+                        to both operands.
 
         Example:
         >>> left_operand = LambdaTermVar("x")
@@ -257,18 +265,21 @@ class LambdaTermBinop(LambdaTerm):
         >>> new_arg = LambdaTermVar("z")
         >>> updated_binop = binop.apply(new_arg)
         """
-        return LambdaTermBinop(self.op, self.left.apply(arg), self.right.apply(arg))
+        lapp = self.left.apply(arg)
+        rapp = self.right.apply(arg)
+        return LambdaTermBinop(self.op, lapp, rapp)
 
     def apply_predicate(self, args):
         """
-        Apply additional predicate arguments to both operands of the binary operation.
+        Apply additional predicate arguments to both operands of the binary
+        operation.
 
         Args:
         - args (list): A list of additional predicate arguments.
 
         Returns:
-        LambdaTermBinop: A new binary operation with the added arguments applied
-        to both operands.
+        LambdaTermBinop: A new binary operation with the added arguments
+        applied to both operands.
 
         Example:
         >>> left_operand = LambdaTermVar("x")
@@ -286,9 +297,9 @@ class LambdaTermPredicate(LambdaTerm):
     """
     Represents a predicate application.
 
-    This class defines a lambda term that represents the application of a predicate
-    function to a list of arguments. It allows the evaluation and application of
-    predicate functions with arguments.
+    This class defines a lambda term that represents the application of
+    a predicate function to a list of arguments. It allows the evaluation and
+    application of predicate functions with arguments.
 
     Args:
     - fun (LambdaTerm): The predicate function.
@@ -302,7 +313,8 @@ class LambdaTermPredicate(LambdaTerm):
 
     def __init__(self, fun, args):
         """
-        Initialize a LambdaTermPredicate object with a predicate function and arguments.
+        Initialize a LambdaTermPredicate object with a predicate function and
+        arguments.
 
         Args:
         - fun (LambdaTerm): The predicate function.
@@ -336,7 +348,8 @@ class LambdaTermPredicate(LambdaTerm):
         - env (dict): The environment for variable bindings.
 
         Returns:
-        LambdaTermPredicate: The result of evaluating the predicate application.
+        LambdaTermPredicate: The result of evaluating the predicate
+                                application.
 
         Example:
         >>> env = {"x": LambdaTermVar("z"), "y": LambdaTermVar("w")}
@@ -345,7 +358,8 @@ class LambdaTermPredicate(LambdaTerm):
         >>> predicate = LambdaTermPredicate(fun, args)
         >>> result = predicate.eval(env)
         """
-        return self.fun.eval(env).apply_predicate([arg.eval(env) for arg in self.args])
+        evargs = [arg.eval(env) for arg in self.args]
+        return self.fun.eval(env).apply_predicate(evargs)
 
     def apply(self, arg):
         """
@@ -355,7 +369,8 @@ class LambdaTermPredicate(LambdaTerm):
         - arg (LambdaTerm): The argument lambda term to apply.
 
         Returns:
-        LambdaTermPredicate: A new predicate application with the added argument.
+        LambdaTermPredicate: A new predicate application with the added
+                            argument.
 
         Example:
         >>> fun = LambdaTermLambda("x", LambdaTermVar("x"))
@@ -368,13 +383,15 @@ class LambdaTermPredicate(LambdaTerm):
 
     def apply_predicate(self, args):
         """
-        Apply additional predicate arguments to the current predicate application.
+        Apply additional predicate arguments to the current predicate
+        application.
 
         Args:
         - args (list): A list of additional predicate arguments.
 
         Returns:
-        LambdaTermPredicate: A new predicate application with the added arguments.
+        LambdaTermPredicate: A new predicate application with the added
+                            arguments.
 
         Example:
         >>> fun = LambdaTermLambda("x", LambdaTermVar("x"))
@@ -390,8 +407,9 @@ class LambdaTermApplication(LambdaTerm):
     """
     Represents a lambda term application.
 
-    This class defines a lambda term that represents the application of one lambda
-    term to another. It allows evaluation and application of lambda terms.
+    This class defines a lambda term that represents the application of one
+    lambda term to another. It allows evaluation and application of
+    lambda terms.
 
     Args:
     - fun (LambdaTerm): The function part of the application.
@@ -405,7 +423,8 @@ class LambdaTermApplication(LambdaTerm):
 
     def __init__(self, fun, arg):
         """
-        Initialize a LambdaTermApplication object with a function and an argument.
+        Initialize a LambdaTermApplication object with a function and
+        an argument.
 
         Args:
         - fun (LambdaTerm): The function part of the application.
@@ -457,7 +476,8 @@ class LambdaTermApplication(LambdaTerm):
         - arg (LambdaTerm): The argument lambda term to apply.
 
         Returns:
-        LambdaTermApplication: A new lambda term application with the updated argument.
+        LambdaTermApplication: A new lambda term application with the updated
+                                argument.
 
         Example:
         >>> fun = LambdaTermLambda("x", LambdaTermVar("x"))
@@ -476,7 +496,8 @@ class LambdaTermApplication(LambdaTerm):
         - args (list): A list of predicate arguments.
 
         Returns:
-        LambdaTermPredicate: A lambda term representing a predicate application.
+        LambdaTermPredicate: A lambda term representing a predicate
+                            application.
 
         Example:
         >>> fun = LambdaTermLambda("x", LambdaTermVar("x"))
@@ -492,9 +513,10 @@ def show_compact(lamb):
     """
     Generate a compact string representation of a lambda term.
 
-    This function takes a lambda term as input and generates a compact string representation
-    by recursively concatenating variable names in the case of lambda abstractions and
-    showing the lambda term when it's not a lambda abstraction.
+    This function takes a lambda term as input and generates a compact
+    string representation by recursively concatenating variable names in the
+    case of lambda abstractions and showing the lambda term when it's not a
+    lambda abstraction.
 
     Args:
     - lamb (LambdaTerm): The lambda term to represent compactly.
@@ -512,11 +534,13 @@ def show_compact(lamb):
         return ", " + str(lamb.var) + show_compact(lamb.body)
     return ". " + lamb.show()
 
+
 class LambdaTermLambda(LambdaTerm):
     """
     Represents a lambda term that represents a lambda abstraction.
 
-    This class extends the LambdaTerm class to represent a lambda abstraction lambda term.
+    This class extends the LambdaTerm class to represent a lambda abstraction
+    lambda term.
     It provides methods for displaying, evaluating, and applying the term.
 
     Attributes:
@@ -559,7 +583,8 @@ class LambdaTermLambda(LambdaTerm):
 
     def __init__(self, var, body):
         """
-        Initialize a lambda abstraction term with the provided variable and body.
+        Initialize a lambda abstraction term with the provided variable
+        and body.
 
         Args:
         - var (str): The variable used in the lambda abstraction.
@@ -599,7 +624,8 @@ class LambdaTermLambda(LambdaTerm):
         >>> evaluated_term = lambda_term.eval(env)
         """
         v = self.fresh(self.var)
-        return LambdaTermLambda(v, self.body.eval({**env, self.var: LambdaTermVar(v)}))
+        envt = {**env, self.var: LambdaTermVar(v)}
+        return LambdaTermLambda(v, self.body.eval(envt))
 
     def apply(self, arg):
         """
@@ -619,13 +645,15 @@ class LambdaTermLambda(LambdaTerm):
 
     def apply_predicate(self, args):
         """
-        Apply the lambda abstraction term as a predicate to a list of arguments.
+        Apply the lambda abstraction term as a predicate to a list of
+        arguments.
 
         Args:
         - args (list): A list of arguments to apply to the term.
 
         Returns:
-        LambdaTerm: The result of applying the term as a predicate to the arguments.
+        LambdaTerm: The result of applying the term as a predicate to the
+                    arguments.
 
         Example:
         >>> result_predicate = lambda_term.apply_predicate(args)
@@ -638,18 +666,22 @@ class LambdaTermExists(LambdaTerm):
     """
     Represents a lambda term that represents existential quantification.
 
-    This class extends the LambdaTerm class to represent an existential quantification
-    lambda term. It provides methods for displaying, evaluating, and applying the term.
+    This class extends the LambdaTerm class to represent an existential
+    quantification lambda term.
+    It provides methods for displaying, evaluating, and applying the term.
 
     Attributes:
     - var (str): The variable being quantified.
     - body (LambdaTerm): The body of the existential quantification.
 
     Methods:
-    - show(): Generate a string representation of the existential quantification term.
-    - eval(env): Evaluate the existential quantification term in an environment.
+    - show(): Generate a string representation of the existential
+                quantification term.
+    - eval(env): Evaluate the existential quantification term in an
+                    environment.
     - apply(arg): Apply the term to an argument.
-    - apply_predicate(args): Apply the term as a predicate to a list of arguments.
+    - apply_predicate(args): Apply the term as a predicate to a list of
+                            arguments.
 
     Example:
     >>> var = "x"
@@ -680,7 +712,8 @@ class LambdaTermExists(LambdaTerm):
 
     def __init__(self, var, body):
         """
-        Initialize an existential quantification term with the provided variable and body.
+        Initialize an existential quantification term with the provided
+        variable and body.
 
         Args:
         - var (str): The variable being quantified.
@@ -696,7 +729,8 @@ class LambdaTermExists(LambdaTerm):
 
     def show(self):
         """
-        Generate a string representation of the existential quantification term.
+        Generate a string representation of the existential quantification
+        term.
 
         Returns:
         str: A string representation of the existential quantification term.
@@ -720,7 +754,8 @@ class LambdaTermExists(LambdaTerm):
         >>> evaluated_term = exists_term.eval(env)
         """
         v = self.fresh(self.var)
-        return LambdaTermExists(v, self.body.eval({**env, self.var: LambdaTermVar(v)}))
+        envt = {**env, self.var: LambdaTermVar(v)}
+        return LambdaTermExists(v, self.body.eval(envt))
 
     def apply(self, arg):
         """
@@ -739,13 +774,15 @@ class LambdaTermExists(LambdaTerm):
 
     def apply_predicate(self, args):
         """
-        Apply the existential quantification term as a predicate to a list of arguments.
+        Apply the existential quantification term as a predicate to a list of
+        arguments.
 
         Args:
         - args (list): A list of arguments to apply to the term.
 
         Returns:
-        LambdaTerm: The result of applying the term as a predicate to the arguments.
+        LambdaTerm: The result of applying the term as a predicate to the
+                    arguments.
 
         Example:
         >>> result_predicate = exists_term.apply_predicate(args)
