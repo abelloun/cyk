@@ -1,4 +1,10 @@
-# Combinatory Categorial Grammar Parser using CKY
+<h1 align="center">Combinatory Categorial Grammar Parser using CKY</h1>
+<p align="center">
+<img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white"></br>
+<img src="https://img.shields.io/badge/Maintained%3F-yes-green.svg">
+<img src="https://img.shields.io/github/license/abelloun/cyk.svg">
+</p>
+
 ***
 ## Table of Contents
 1. [General Informations](#general-info)
@@ -70,9 +76,7 @@ We also give a grammar sample, which is unfinished
 ***
 ### Requirements and Installation
 <a name="installation"></a>
-- **Python 3.12 or above**: The project is developed using Python 3.12.
-
-- **RDParser**: The `RDParser` library is incorporated to enhance parsing capabilities. This external dependency enables the project to work with CCG grammar rules and lexicon entries efficiently.
+- **Python 3.10 or above**: The project is developed using Python 3.12. Python 3.10 is needed for pattern matching.
 
 Make sure to have these libraries installed and compatible with your Python environment for the project to function correctly.
 ***
