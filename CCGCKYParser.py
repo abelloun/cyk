@@ -576,6 +576,7 @@ class CKYDerivation:
             if sem:
                 current_sem = self.current.sem.show()
                 offset = max(len(current_show), len(current_sem), totsize)
+                offspace_s = ((offset-len(current_sem))//2)*" "
             else:
                 offset = max(len(current_show), totsize)
 
@@ -593,7 +594,6 @@ class CKYDerivation:
                 vd = toprm.pop(0)
                 res += s*" " + vl + (sizel-len(vl)+3)*" " + vd + "\n"
 
-            offspace_s = ((offset-len(current_sem))//2)*" "
             offspace_t = ((offset-len(current_show))//2)*" "
             if sem:
                 return (res + offset*"=" + comb + "\n"

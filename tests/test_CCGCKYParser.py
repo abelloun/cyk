@@ -7,7 +7,8 @@ from CCGCKYParser import (CCGCKYParser, TokenError, Inference,
                           TypeRaisingLeft, TypeRaisingRight)
 from CCGrammar import CCGrammar
 from CCGExprs import CCGExprString
-from CCGTypes import CCGTypeAtomic
+from CCGTypes import CCGTypeAtomic, CCGTypeAtomicVar
+from CCGLambdas import LambdaTermLambda, LambdaTermApplication, LambdaTermVar
 
 class TestUtils(unittest.TestCase):
 
@@ -198,7 +199,7 @@ class TestCKYDerivation(unittest.TestCase):
                                                                                                                             CCGTypeAtomic("NP")))]
 
 
-        cls.combinator = Inference("$R", [cls.hyp1, cls.hyp2], cls.concl, lambda data: data[1].sem.apply(data[0].sem) if data[0].sem and data[1].sem else None)
+        cls.combinator = Inference("$R", [cls.hyp1, cls.hyp2], cls.concl, lambda data: LambdaTermVar("x"))
         cls.current = cls.combinator.match(cls.data)
 
     def test_init(self):
@@ -220,11 +221,71 @@ class TestCKYDerivation(unittest.TestCase):
 
     def test_sub_show(self):
         derivation = CKYDerivation(self.current, None, self.combinator)
-        sub_representation, width = derivation.sub_show()
 
-        self.assertIsInstance(sub_representation, str)
-        self.assertIsInstance(width, int)
+        tr = Inference("T<",
+            [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
+            Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeVar("X")))),
+            lambda data: LambdaTermVar("x"),
+            lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
+        )
+        c2 = tr.match([self.current])
+        derivation2 = CKYDerivation(c2, [derivation], tr)
 
+        cr = Inference("B<",
+            [
+                Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"), CCGTypeVar("Y"))),
+                Judgement(CCGExprVar("b"), CCGTypeComposite(0, CCGTypeVar("Y"), CCGTypeVar("Z"))),
+            ],
+            Judgement(
+                CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")),
+                CCGTypeComposite(0, CCGTypeVar("X"), CCGTypeVar("Z"))
+            ),
+            lambda data: LambdaTermLambda("x", LambdaTermApplication(LambdaTermVar("y"), LambdaTermApplication(LambdaTermVar("y"), LambdaTermVar("x"))))
+        )
+
+        cr_data = Judgement(CCGExprString("tomato"), CCGTypeComposite(0, CCGTypeComposite(1, CCGTypeAtomic("NP"), CCGTypeAtomicVar("S")), CCGTypeAtomic("N")))
+
+        c3 = cr.match([c2, cr_data])
+        derivation3 = CKYDerivation(c3, [derivation, derivation2], cr)
+        derivation3b = CKYDerivation(c3, [derivation2, derivation], cr)
+        derivation_not = CKYDerivation(c3, [derivation2, derivation, derivation2], cr)
+
+        sub_representation1, width1 = derivation.sub_show(sem=False)
+        sub_representation1s, width1s = derivation.sub_show(sem=True)
+        sub_representation2, width2 = derivation2.sub_show(sem=False)
+        sub_representation2s, width2s = derivation2.sub_show(sem=True)
+        sub_representation3, width3 = derivation3.sub_show(sem=False)
+        sub_representation3s, width3s = derivation3.sub_show(sem=True)
+        sub_representation3b, width3b = derivation3b.sub_show(sem=False)
+        sub_representation3bs, width3bs = derivation3b.sub_show(sem=True)
+        self.assertIsInstance(sub_representation1, str)
+        self.assertIsInstance(width1, int)
+        self.assertIsInstance(sub_representation1s, str)
+        self.assertIsInstance(width1s, int)
+        self.assertIsInstance(sub_representation2, str)
+        self.assertIsInstance(width2, int)
+        self.assertIsInstance(sub_representation2s, str)
+        self.assertIsInstance(width2s, int)
+        self.assertIsInstance(sub_representation3, str)
+        self.assertIsInstance(width3, int)
+        self.assertIsInstance(sub_representation3s, str)
+        self.assertIsInstance(width3s, int)
+        self.assertIsInstance(sub_representation3b, str)
+        self.assertIsInstance(width3b, int)
+        self.assertIsInstance(sub_representation3bs, str)
+        self.assertIsInstance(width3bs, int)
+
+
+        self.assertGreater(width3, width2 + width1)
+        self.assertGreater(width2, width1)
+        self.assertGreater(width3s, width2s + width1s)
+        self.assertGreater(width2s, width1s)
+        self.assertGreater(width3bs, width2s + width1s)
+        self.assertGreater(width3b, width2 + width1)
+
+        with self.assertRaises(NotImplementedError):
+            derivation_not.sub_show()
+            
     def test_show(self):
         past = None
         derivation = CKYDerivation(self.current, past, self.combinator)

@@ -65,11 +65,7 @@ class Testrd(unittest.TestCase):
         self.assertEqual(result, ('Hello, ', 'World!'))
 
     def test_raw_with_ignore(self):
-        def ignore_hello(str_e, mem={}):
-            if str_e.startswith("Hello, "):
-                return "Hello, ", str_e[len("Hello, "):]
-            return None
-
+        ignore_hello = (lambda x: ("Hello, ", x[len("Hello, "):]) if x.startswith("Hello, ") else (None, x))
         parser = rd.raw(rd.str("Hello"))
         result = parser("Hello World!", ignore_hello)
         self.assertEqual(result, ('Hello', ' World!'))
