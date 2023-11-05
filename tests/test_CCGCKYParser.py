@@ -274,8 +274,6 @@ class TestCKYDerivation(unittest.TestCase):
         self.assertIsInstance(width3b, int)
         self.assertIsInstance(sub_representation3bs, str)
         self.assertIsInstance(width3bs, int)
-
-
         self.assertGreater(width3, width2 + width1)
         self.assertGreater(width2, width1)
         self.assertGreater(width3s, width2s + width1s)
@@ -285,7 +283,7 @@ class TestCKYDerivation(unittest.TestCase):
 
         with self.assertRaises(NotImplementedError):
             derivation_not.sub_show()
-            
+
     def test_show(self):
         past = None
         derivation = CKYDerivation(self.current, past, self.combinator)
