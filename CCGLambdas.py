@@ -570,14 +570,14 @@ class LambdaTermLambda(LambdaTerm):
         Build a lambda abstraction term from variables u and v.
 
         Args:
-        - u (str): The variable u.
+        - u (LambdaTerm): The body.
         - v (str): The variable v.
 
         Returns:
         LambdaTermLambda: A lambda abstraction term.
 
         Example:
-        >>> lambda_term = LambdaTermLambda.build("x", "y")
+        >>> lambda_term = LambdaTermLambda.build(LambdaTermVar("y"), "z")
         """
         return cls(v, u)
 
@@ -699,14 +699,14 @@ class LambdaTermExists(LambdaTerm):
         Build an existential quantification term from variables u and v.
 
         Args:
-        - u (str): The variable u.
+        - u (LambdaTerm): The bbdy.
         - v (str): The variable v.
 
         Returns:
         LambdaTermExists: An existential quantification term.
 
         Example:
-        >>> exists_term = LambdaTermExists.build("x", "y")
+        >>> exists_term = LambdaTermExists.build(build(LambdaTermVar("y"), "z"), "y")
         """
         return cls(v, u)
 
