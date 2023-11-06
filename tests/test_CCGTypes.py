@@ -60,3 +60,10 @@ class TestCCGTypes(unittest.TestCase):
 
         # Compare the attributes of the objects
         self.assertEqual(sigma["X"].name, "Y")
+
+    def test_ccg_type_reset(self):
+        CCGType.reset()
+        t1 = CCGType.fresh("X")
+        CCGType.reset()
+        t2 = CCGType.fresh("X")
+        self.assertEqual(t1, t2)

@@ -46,6 +46,7 @@ from CCGrammar import Judgement
 from CCGLambdas import LambdaTermVar, LambdaTermApplication, LambdaTermLambda
 from CCGTypes import CCGTypeVar, CCGTypeComposite, CCGTypeAtomicVar
 from CCGExprs import CCGExprVar, CCGExprConcat
+from nltk.tree import Tree
 
 
 class TokenError(Exception):
@@ -488,6 +489,33 @@ class CKYDerivation:
         self.current = current
         self.past = past
         self.combinator = combinator
+
+    def to_nltk_tree(self):
+        """
+        Convert a CKYDerivation object into an NLTK Tree.
+
+        This method creates an NLTK Tree representation of the current CKYDerivation object
+        and its past derivations. If there are no past derivations, it returns a tree
+        representing only the current derivation.
+
+        Returns:
+        - nltk.tree.Tree: An NLTK Tree representing the current and past derivations.
+
+        Example:
+        >>> cky_node = CKYDerivation(...)
+        >>> past_derivations = [CKYDerivation(...), CKYDerivation(...)]
+        >>> combinator = Combinator(...)
+        >>> derivation = CKYDerivation(cky_node, past_derivations, combinator)
+        >>> nltk_tree = derivation.to_nltk_tree()
+        >>> print(nltk_tree)
+               current
+              /   |   \
+          past1 past2 past3
+        """
+        if self.past is None:
+            return self.current.show()
+        return Tree(self.current.show(), [child.to_nltk_tree() for child in self.past])
+
 
     def __str__(self):
         """

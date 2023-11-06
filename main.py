@@ -19,6 +19,7 @@ run(TXT_SAMPLE, GRAMMAR)
 import time
 from CCGCKYParser import CCGCKYParser
 from CCGrammar import CCGrammar
+from nltk.tree import Tree
 
 GRAMMAR = '''
     :- Phrase, GrNom, Nom
@@ -296,7 +297,8 @@ def run(txt, grammar):
             # Iterate through the parsing results and display them.
             for parse in parses:
                 print(parse.show(sem=True))
-                print(parse.current.expr.show(), parse.current.sem.show())
+                print(parse.to_nltk_tree().draw())
+                #print(parse.current.expr.show(), parse.current.sem.show())
                 cpt_n += 1
                 # break
         else:

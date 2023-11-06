@@ -9,6 +9,7 @@ from CCGrammar import CCGrammar
 from CCGExprs import CCGExprString
 from CCGTypes import CCGTypeAtomic, CCGTypeAtomicVar
 from CCGLambdas import LambdaTermLambda, LambdaTermApplication, LambdaTermVar
+from nltk.tree import Tree
 
 class TestUtils(unittest.TestCase):
 
@@ -195,8 +196,9 @@ class TestCKYDerivation(unittest.TestCase):
         cls.hyp2 = Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"),
                                                               CCGTypeVar("Y")))
         cls.concl = Judgement(CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")), CCGTypeVar("C"))
-        cls.data = [Judgement(CCGExprString('fruit'), CCGTypeAtomic("NP")), Judgement(CCGExprString('apple'), CCGTypeComposite(0, CCGTypeAtomic("S"),
-                                                                                                                            CCGTypeAtomic("NP")))]
+        cls.d1 = Judgement(CCGExprString('fruit'), CCGTypeAtomic("NP"))
+        cls.d2 = Judgement(CCGExprString('apple'), CCGTypeComposite(0, CCGTypeAtomic("S"), CCGTypeAtomic("NP")))
+        cls.data = [cls.d1, cls.d2]
 
 
         cls.combinator = Inference("$R", [cls.hyp1, cls.hyp2], cls.concl, lambda data: LambdaTermVar("x"))
@@ -290,3 +292,52 @@ class TestCKYDerivation(unittest.TestCase):
         string_representation = derivation.show()
 
         self.assertIsInstance(string_representation, str)
+
+    def test_to_nltk_tree(self):
+
+        derivation = CKYDerivation(self.current, None, self.combinator)
+
+        tr = Inference("T<",
+            [Judgement(CCGExprVar("a"), CCGTypeAtomicVar("X"))],
+            Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("T"), CCGTypeComposite(1, CCGTypeVar("T"), CCGTypeVar("X")))),
+            lambda data: LambdaTermVar("x"),
+            lambda x: (x[0], x[1].replace({"T": CCGTypeVar(x[1].type.fresh("T"))}))
+        )
+        c2 = tr.match([self.current])
+        derivation2 = CKYDerivation(c2, [derivation], tr)
+
+        cr = Inference("B<",
+            [
+                Judgement(CCGExprVar("a"), CCGTypeComposite(0, CCGTypeVar("X"), CCGTypeVar("Y"))),
+                Judgement(CCGExprVar("b"), CCGTypeComposite(0, CCGTypeVar("Y"), CCGTypeVar("Z"))),
+            ],
+            Judgement(
+                CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")),
+                CCGTypeComposite(0, CCGTypeVar("X"), CCGTypeVar("Z"))
+            ),
+            lambda data: LambdaTermLambda("x", LambdaTermApplication(LambdaTermVar("y"), LambdaTermApplication(LambdaTermVar("y"), LambdaTermVar("x"))))
+        )
+
+        cr_data = Judgement(CCGExprString("tomato"), CCGTypeComposite(0, CCGTypeComposite(1, CCGTypeAtomic("NP"), CCGTypeAtomicVar("S")), CCGTypeAtomic("N")))
+
+        c3 = cr.match([c2, cr_data])
+        derivation3 = CKYDerivation(c3, [derivation, derivation2], cr)
+        derivation3b = CKYDerivation(c3, [derivation2, derivation], cr)
+        tree = derivation.to_nltk_tree()
+        tree2 = derivation2.to_nltk_tree()
+        tree3 = derivation3.to_nltk_tree()
+        tree3b = derivation3b.to_nltk_tree()
+        self.assertIsInstance(tree, str)
+        self.assertEqual(tree, self.current.show())
+        self.assertIsInstance(tree2, Tree)
+        self.assertIsInstance(tree3, Tree)
+        self.assertIsInstance(tree3b, Tree)
+        self.assertEqual(len(tree2), 1)
+        self.assertEqual(len(tree3), 2)
+        self.assertEqual(len(tree3b), 2)
+        self.assertEqual(tree3b.height(), 3)
+        self.assertEqual(tree3.height(), 3)
+        self.assertEqual(tree2.height(), 2)
+        self.assertEqual(tree3b.label(), '"apple fruit tomato":(NP \\ N)')
+        self.assertEqual(tree3.label(), '"apple fruit tomato":(NP \\ N)')
+        self.assertEqual(tree2.label(), '"apple fruit":($T_27 \\ ($T_27 / $X))')
