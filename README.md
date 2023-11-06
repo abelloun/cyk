@@ -58,7 +58,7 @@ The project is still under development
 - [x] Is able to manage semantics (with existential and binary operators)
 - [x] Is able to compute derivations
 - [x] Is able to print the derivations in a concise and human readable way
-- [x] Is adaptive (new rules can be easily added) -> But only unary/binary rules for printing !
+- [x] Is adaptive (new rules can be easily added), rules must be binarized so unitary rules must be treated this way in the CKY Parser
 - [x] Is well documented (pylint scores > 9/10)
 - [x] Is well tested (99% coverage)
 - [ ] Is not able to compute weights on derivations
