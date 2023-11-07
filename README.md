@@ -48,6 +48,11 @@ Our implementation allows application and combination rules, and it is also poss
 The CKY algorithm has been adapted for CCG to efficiently parse sentences and provide syntactic and semantic analysis. When constructing the parsing trees, we keep track of the ancestors of each judgement, and reconstruct them at the end using backpointing. This is useful because several different derivations can lead to the same type in one node of the tree, particularly if type raising is used.
 
 It is possible to annotate a word with semantics, which will be taken into account when displayed if the `sem` parameter is set to `True`.\
+Semantics are composed of :
+- Lambda abstraction : `\\x. P`, `\\exists x. P`
+- Predicates/free variables : `angry` `cat` such that `(\\P x. P(x)) cat = \\x. cat(x)`
+- Booleans operators : `P & Q` such that `(P & Q)(x) = P(x) & Q(x)`
+  
 ![Derivation example of the sentence 'The cat sleeps calmly'.](/image/derivexamplesem.png "Derivation example of the sentence 'The cat sleeps calmly'.")
 
 ***
