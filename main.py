@@ -20,6 +20,7 @@ import time
 from CCGCKYParser import CCGCKYParser
 from CCGrammar import CCGrammar
 from nltk.tree import Tree
+from random import randint, choice
 
 GRAMMAR = '''
     :- Phrase, GrNom, Nom
@@ -81,8 +82,8 @@ GRAMMAR = '''
     mon => DetMasc  {\\P R x. P(x) & possede(moi, x) & R(x)}
     mes => DetMascPlur  {\\P R x. P(x) & possede(moi, x) & R(x)}
     mes => DetFemPlur  {\\P R x. P(x) & possede(moi, x) & R(x)}
-    ses => DetMascPlur  {\\P R x y. P(x) & possede(y, x) & R(x)}
-    ses => DetFemPlur  {\\P R x y. P(x) & possede(y, x) & R(x)}
+    ses => DetMascPlur  {\\P R x. exists y. P(x) & possede(y, x) & R(x)}
+    ses => DetFemPlur  {\\P R x. exists y. P(x) & possede(y, x) & R(x)}
     un => DetMasc   {\\P R y. exists x. P(x) & R(x)}
     Un => DetMasc   {\\P R y. exists x. P(x) & R(x)}
 
@@ -102,8 +103,8 @@ GRAMMAR = '''
     qui => (GrNom[Masc]\\GrNom[Masc])/VbIntransSM {\\P Q R. P(Q, R)}
     qui => (GrNom[FemPlur]\\GrNom[FemPlur])/VbIntransPF {\\P Q R. P(Q, R)}
     qui => (GrNom[MascPlur]\\GrNom[MascPlur])/VbIntransPM {\\P Q R. P(Q, R)}
-    donné => PP[Masc] {\\P x y z. donne(x, y, z) & P(y)}
-    mangée => PP[Fem] {\\P x y z. mange(x, y) & P(y)}
+    donné => PP[Masc] {\\P x. exists y. exists z. donne(x, y, z) & P(y)}
+    mangée => PP[Fem] {\\P x. exists y. exists z. mange(x, y) & P(y)}
 
     # Superlatif
     très => AdjMascL/AdjMascL {\\P. P}
@@ -138,8 +139,8 @@ GRAMMAR = '''
     est => VbIntransSM/AdjMascL {\\P Q R. Q(P(R))}
     est => VbIntransSF/AdjFemL {\\P Q R. Q(P(R))}
     est => VbIntransSM/AdjMascR {\\P Q R. Q(P(R))}
-    est => VbIntransSF/PP {\\P Q R x. exists y. Q(\\u. P(R, x, u, y))}
-    est => VbIntransSM/PP {\\P Q R x. exists y. Q(\\u. P(R, x, u, y))}
+    est => VbIntransSF/PP[Fem] {\\P Q R x. exists y. Q(\\u. P(R, x, u, y), y)}
+    est => VbIntransSM/PP[Masc] {\\P Q R x. exists y. Q(\\u. P(R, x, u, y), y)}
     donner => VerbeInf {\\P Q R x y s. P(\\z. Q(\\u. donne(u, z, y) & R(x), x), s)}
 
     # Adverbes
@@ -157,12 +158,12 @@ GRAMMAR = '''
     à => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R x y s. Q(\\u. P(\\n. R(y), s), x, y, s)}
     à => (VbTransSM\\AnteposMasc)\\VbTransSM {\\P Q S T R x y s. P(Q(\\O. O), \\M z. S(\\n. M(x), s), T(R), x, s)}
     à => (VbTransSF\\AnteposFem)\\VbTransSF {\\P Q S T R x y. Q(P(T, S, \\z. R(x), y, x))}
-    avec => AdvF/GrNom {\\P S Q R x z y. S(Q, \\u. P(utilise(z) & \\u. R(z), x, z), z, y) }
-    avec => AdvM/GrNom {\\P S Q R x z y. S(Q, \\u. P(utilise(z) & \\u. R(z), x, z), z, y) }
+    avec => AdvF/GrNom {\\P S Q R x. exists z. S(Q, \\u. P(utilise(z) & \\u. R(z), x, z), z) }
+    avec => AdvM/GrNom {\\P S Q R x. exists z. S(Q, \\u. P(utilise(z) & \\u. R(z), x, z), z) }
     de => (GrNom[Masc]/GrNom)\\GrNom[Masc] {\\P Q R u. exists x. Q(\\z. P(R, x) & appartient(x, u), u)}
     de => (GrNom[Fem]/GrNom)\\GrNom[Fem] {\\P Q R u. exists x. Q(\\z. P(R, x) & appartient(x, u), u)}
-    par => (PP[Masc]\\PP[Masc])/GrNom {\\P Q R x y s. Q(\\u. P(\\n. R(y), x), x, y, s)}
-    par => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R x y s. Q(\\u. P(\\n. R(y), x), x, y, s)}
+    par => (PP[Masc]\\PP[Masc])/GrNom {\\P Q R x. exists y. exists s. Q(\\u. P(\\n. R(y), x), x, y, s)}
+    par => (PP[Fem]\\PP[Fem])/GrNom {\\P Q R x. exists y. exists s. Q(\\u. P(\\n. R(y), x), x, y, s)}
 
     # Conjonctions
     et => (GrNom[MascPlur]/GrNom[Fem])\\GrNom[Masc] {\\L C R x. exists y. (L(R, x) & C(R, y))}
@@ -175,7 +176,7 @@ GRAMMAR = '''
     et => (VbTransSM/VbTransSM)\\VbTransSM {\\L C P Q R x. exists y. (L(P, Q, R, x, y) & C(P, Q, R, x, y))}
     #et => (VbTransSM/VbTransSM)\\VbTransSM {\\P Q R x y. Q(\\n. P(pourchasse(n) & (\\s. R(n)), y), x)}             pourchasse(n) & (\\s. R(n))
 
-        # {\\x y. pourchasse(y) & (\\s. R(y))}
+    # {\\x y. pourchasse(y) & (\\s. R(y))}
     #et => (VbTransSM/VbTransSM)\\VbTransSM {\\L C P Q R x. exists y. L(P, Q(t), C(\\x y. x, \\s n. s(n), R, x, x), x, y)}
     et => (VbTransSF/VbTransSF)\\VbTransSF {\\L C P Q R x. exists y. (L(P, Q, R, x, y) & C(P, Q, R, x, y))}
     et => (VbIntransSF/VbIntransSF)\\VbIntransSF {\\L C P Q x. (L(P, R, x) & C(P, R, x))}
@@ -190,7 +191,7 @@ GRAMMAR = '''
     # Phrases interrogatives
     Quel => ((Phrase/Ponct[Interro])/VbIntransSM)/Nom[Masc] {\\P Q R. (Q((\\S. exists x. S(x) & P(x)), R))}
     quel => GrNom[Question]/Nom[Masc] {\\P Q R. (Q((\\S. exists x. S(x) & P(x)), R))}
-    Quelle => ((Phrase/Ponct[Interro])/VbIntransSF)/Nom[Fem] {\\P Q R. (Q((\\S. exists x. S(x) & P(x)), R))}
+    Quelle => ((Phrase/Ponct[Interro])/VbIntransSF)/Nom[Fem] {\\P Q R y. (Q((\\S. exists x. S(x) & P(y)), R))}
     quelle => GrNom[Question]/Nom[Fem] {\\P R x. P(x) & R(x)}
     Qui => (Phrase/Ponct[Interro])/VbIntransSM {\\Q R. (Q((\\S. exists x. S(x) & humain(x)), R))}
     Qui => (Phrase/Ponct[Interro])/VbIntransSF {\\Q R. (Q((\\S. exists x. S(x) & humain(x)), R))}
@@ -258,7 +259,6 @@ TXT_SAMPLE = '''
     la souris de mon chat et le fromage dorment
     un fromage très méchant mange le fromage
     le voisin de mon chat mange mon voisin
-    Le chat mange mon fromage avec la souris
     Le méchant chat attrape et mange la souris paisiblement
     Le chat est méchant
     La souris est mangée par mon voisin
@@ -269,7 +269,6 @@ TXT_SAMPLE = '''
     La souris est mangée
     La souris est mangée par ses dents
     La souris mange un rat paisiblement
-    La souris mange paisiblement paisiblement un rat
 '''
 
 TXT_TEST = '''
@@ -278,6 +277,38 @@ Le chat de la sœur de mon voisin dort
 '''
 
 word_test = ""
+
+words = {"chat", "fromage", "rat", "voisin", "sœur", "souris",
+         "dents", "la", "le", "mon", "ses", "un", "La", "Le", "Un",
+         "méchant", "noir", "donné", "mangée", "très", "Il", "Elle",
+          "pourchasse", "attrape", "mange", "dorment", "dort", "donne",
+          "souhaite", "est", "donner", "paisiblement", "à", "A",
+          "avec", "Avec", "de", "et", "lui", "par", "que", "Quel",
+          "quel", "Quelle", "quelle", "qui", "Qui", "quoi", "?"}
+
+mem = set(())
+
+def run_random(grammar):
+    ccg = CCGrammar(grammar)
+    mem = set()
+    with open('output_words.txt', 'a') as f:
+        print("Début de l'écriture du fichier")
+        while True:
+            for i in range(randint((len(mem)//10)+3, len(mem)//10+6), len(mem)//10+8):
+                #print(i)
+                txt_test = choice(list(words))
+                for j in range(i):
+                    txt_test += " " + choice(list(words))
+                for line in txt_test.splitlines():
+                    parses = CCGCKYParser(ccg, line, use_typer=False)
+                    if parses:
+                        if line not in mem:
+                            f.write(line + "\n")
+                            print(line)
+                            #chart.printCCGDerivation(parse)
+                            mem.add(line)
+                             #chart.printCCGDerivation(parse)
+                        #break
 
 
 def run(txt, grammar):
@@ -320,9 +351,10 @@ def run(txt, grammar):
             for parse in parses:
                 #print(parse.show(sem=True))
                 #print(parse.to_nltk_tree())
-                print(parse.current.expr.show(), parse.current.sem.show(), "\n")
-                cpt_n += 1
+                print(parse.current.expr.show(), '\n', parse.current.sem.show(), '\n')
+                # cpt_n += 1
                 #break
+            #print(sentence, " : ", cpt_n, "parses valides")
         else:
             # Handle cases where parsing fails.
             #print(f"@@@@@@@@@@@@ FAIL on ::: {sentence} @@@@@@@@@@@@\n")
@@ -336,4 +368,5 @@ def run(txt, grammar):
     print("CPT TOTAL", cpt)
 
 
-run(TXT_SAMPLE, GRAMMAR)
+# run(TXT_SAMPLE, GRAMMAR)
+run_random(GRAMMAR)

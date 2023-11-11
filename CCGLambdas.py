@@ -787,5 +787,6 @@ class LambdaTermExists(LambdaTerm):
         Example:
         >>> result_predicate = exists_term.apply_predicate(args)
         """
+        self.reset()
         f = self.body.eval({self.var: args[0]})
         return f.apply_predicate(args[1:]) if len(args) > 1 else f
