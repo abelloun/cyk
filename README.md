@@ -64,7 +64,7 @@ The project is still under development
 - [x] Is able to compute derivations
 - [x] Is able to print the derivations in a concise and human readable way
 - [x] Is adaptive (new rules can be easily added), rules must be binarized so unitary rules must be treated this way in the CKY Parser
-- [x] Is well documented (pylint scores > 9/10)
+- [x] Is well documented (pylint scores > 8/10)
 - [x] Is well tested (99% coverage)
 - [ ] Is not able to compute weights on derivations
 - [ ] Does not check cycles in syntax shortcuts of type
@@ -74,7 +74,7 @@ The project is still under development
 We also give a grammar sample, which is unfinished
 - [x] All correct sentences can be parsed
 - [x] Not too ambiguous
-- [ ] Semantics are still a bit cobbled together, but mainly work
+- [x] Semantics are mostly correct
 - [ ] Can manage subjunctive sentences
 - [ ] Does not yet have consistent weights on derivations
 
