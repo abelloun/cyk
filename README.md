@@ -29,6 +29,7 @@ There are two kind of types :
     An element of type X/Y (resp. X/Y) expects an element of type Y to its right (resp. left), and returns an element of type X
 
 Syntax shortcuts can be defined in the grammar using the `::` operator.\
+Types can be annotated using bracket `[...]` to specify its attributes.\
 *Example :*
 ```
 AdjMascL :: N[Masc]/N[Masc]
