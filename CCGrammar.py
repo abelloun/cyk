@@ -180,8 +180,7 @@ class Judgement:
         self.type = type_judg
         self.cpt = 0
         self.sem = sem
-        self.derivation = derivation if derivation else [{"weight": weight,
-                                                          "derivation": []}]
+        self.derivation = derivation if derivation else [{"weight": weight,"derivation": []}]
 
     def show(self, printsem=False):
         """
@@ -260,7 +259,7 @@ class Judgement:
         der = self.derivation
         return Judgement(exp, typ, sem=self.sem, derivation=der)
 
-    def deriving(self, combinator, sigma, judmts, sem=None):
+    def deriving(self, combinator, sigma, judmts, sem=None, combinator_weight=0):
         """
         Derive new judgments based on combinator, substitution, and input
         judgments.
@@ -284,7 +283,7 @@ class Judgement:
         self.derivation = []
         derivations_list = [judgment.derivation for judgment in judmts]
         for derivations in product(*derivations_list):
-            tt_weight = max(derv["weight"] for derv in derivations)
+            tt_weight = max(combinator_weight, max(derv["weight"] for derv in derivations))
             pst = [combinator, sigma, judmts]
             der = {"weight": tt_weight, "derivation": pst}
             self.derivation.append(der)
@@ -402,6 +401,11 @@ class Weight:
         self.combinator_name = combinator_name
         self.premices = premices
         self.weight = weight
+
+
+    def expand(self, key, value):
+        return Weight(self.combinator_name, [p.expand(key, value) for p in self.premices], self.weight)
+
 
     def match(self, combinator, sigma):
         """
@@ -625,6 +629,8 @@ class CCGrammar:
                 self.aliases[elk] = elv.expand(alv.key, alv.value)
             for (rulk, rulvs) in self.rules.items():
                 self.rules[rulk] = [r.expand(alv.key, alv.value) for r in rulvs]
+            for (weik, weivs) in self.weights.items():
+                self.weights[weik] = [w.expand(alv.key, alv.value) for w in weivs]
 
     def show(self):
         """

@@ -208,6 +208,8 @@ GRAMMAR = '''
     Weight("<", PhraseInterro, Phrase\\PhraseInterro) = 1.0
     Weight(">", GrNom/Nom, Nom) = 2.0
     Weight("<", GrNom, GrNom\\GrNom) = 0.8
+    Weight("<", GrNom, Phrase\\GrNom) = 0.8
+
 '''
 
 TXT_SAMPLE = '''
@@ -350,8 +352,9 @@ def run(txt, grammar):
             # Iterate through the parsing results and display them.
             for parse in parses:
                 #print(parse.show(sem=True))
+                print(parse.show(sem=False))
                 #print(parse.to_nltk_tree())
-                print(parse.current.expr.show(), '\n', parse.current.sem.show(), '\n')
+                print(parse.current.expr.show(), '\n', ",".join([str(d["weight"]) for d in parse.current.derivation]), '\n', parse.current.sem.show(), '\n')
                 # cpt_n += 1
                 #break
             #print(sentence, " : ", cpt_n, "parses valides")
@@ -368,5 +371,5 @@ def run(txt, grammar):
     print("CPT TOTAL", cpt)
 
 
-# run(TXT_SAMPLE, GRAMMAR)
-run_random(GRAMMAR)
+run(TXT_SAMPLE, GRAMMAR)
+#~ run_random(GRAMMAR)

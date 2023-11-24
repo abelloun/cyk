@@ -44,7 +44,7 @@ Raises:
 """
 from CCGrammar import Judgement
 from CCGLambdas import LambdaTermVar, LambdaTermApplication, LambdaTermLambda
-from CCGTypes import CCGTypeVar, CCGTypeComposite, CCGTypeAtomicVar
+from CCGTypes import CCGType, CCGTypeVar, CCGTypeComposite, CCGTypeAtomicVar
 from CCGExprs import CCGExprVar, CCGExprConcat
 from nltk.tree import Tree
 
@@ -192,9 +192,9 @@ class Inference:
         xxx = " " * (wdt - ldn + 1 - max(0, (wdt - ldn)//2))
         name = self.name
         ctr = center(wdt, ldn)
-        return f"{center(wdt, lup)}{up}\n{rep}{name}\n{ctr}{down}{xxx}"
+        return f"{center(wdt, lup)}{up}\n{rep}{name}{self.concl.derivation[0]['weight']}\n{ctr}{down}{xxx}"
 
-    def match(self, data):
+    def match(self, data, ccg):
         """
         Matches the inference rule with given data, updating variable
         substitutions.
@@ -227,7 +227,29 @@ class Inference:
         sem = None
         if self.sem:
             sem = (self.sem)(data)
-        return concl.replace(sigma).deriving(self, sigma, data, sem)
+
+        conc = concl.replace(sigma)
+        ttw = -1
+        if self.name in ccg.weights:
+            for w in ccg.weights[self.name]:
+                ttw = w.weight
+                for (l, r) in zip(hyps, w.premices):
+                    if CCGType.unify(l.replace(sigma).type, r.replace(sigma), sigma):
+                        gamma = l.derivation[0]['weight'] if len(l.derivation) else 42
+                        print('ok : ', l.replace(sigma).show(), ttw, gamma)
+                        ttw = ttw * gamma
+                    else:
+                        ttw = -1
+                        break
+                if ttw >= 0:
+                    print("Yes !", ttw)
+                    break
+        if ttw < 0:
+            print("No !", ttw)
+            ttw = 0
+        else:
+            print("Yes !", ttw)
+        return conc.deriving(self, sigma, data, sem, ttw)
 
     def replace(self, sigma):
         """
@@ -565,7 +587,7 @@ class CKYDerivation:
 
         if len(self.past) == 1:
             current_show = self.current.type.show()
-            comb = self.combinator.name
+            comb = self.combinator.name + ":" + str(self.current.derivation[0]['weight'])
             top, size = self.past[0].sub_show(sem)
 
             if sem:
@@ -600,7 +622,7 @@ class CKYDerivation:
             toprm = topr.split("\n")
             current_show = self.current.type.show()
 
-            comb = self.combinator.name
+            comb = self.combinator.name + ":" + str(self.current.derivation[0]['weight'])
             if sem:
                 current_sem = self.current.sem.show()
                 offset = max(len(current_show), len(current_sem), totsize)
@@ -647,7 +669,7 @@ class CKYDerivation:
         return self.sub_show(sem=sem)[0]
 
 
-def add_combinations(combinators, left, right, current_chart):
+def add_combinations(combinators, left, right, current_chart, ccg):
     """
     Add valid combinations of combinators to the current chart.
 
@@ -666,18 +688,18 @@ def add_combinations(combinators, left, right, current_chart):
     >>> left = Judgement(CCGExprVar("a"), CCGTypeComposite(1, CCGTypeVar("X"), CCGTypeVar("Y")))
     >>> right = Judgement(CCGExprVar("b"), CCGTypeVar("Y"))
     >>> chart = set()
-    >>> result = add_combinations(combinators, left, right, chart)
+    >>> result = add_combinations(combinators, left, right, chart, cgg)
     >>> print(result)
     {0: {1: {Judgement(CCGExprConcat(CCGExprVar("a"), CCGExprVar("b")), CCGTypeVar("X")}}}
     """
     for combinator in combinators:
-        result = combinator.match([left, right])
+        result = combinator.match([left, right], ccg)
         if result:
             current_chart.add(result)
     return current_chart
 
 
-def compute_chart(combinators, chart, span, start, use_typer=False):
+def compute_chart(combinators, chart, span, start, ccg, use_typer=False):
     """
     Compute the chart of valid derivations for a given span of input.
 
@@ -714,15 +736,15 @@ def compute_chart(combinators, chart, span, start, use_typer=False):
         left_right_pairs = [(left, right) for left in chart[(start, mid)] for right in chart[(mid, start + span)]]
 
         for left, right in left_right_pairs:
-            current_chart = add_combinations(combinators, left, right, current_chart)
+            current_chart = add_combinations(combinators, left, right, current_chart, ccg)
             if use_typer:
                 new_right = TypeRaisingRight.match([right])
                 if new_right:
-                    current_chart = add_combinations(combinators, left, new_right, current_chart)
+                    current_chart = add_combinations(combinators, left, new_right, current_chart, ccg)
             if use_typer:
                 new_left = TypeRaisingLeft.match([left])
                 if new_left:
-                    current_chart = add_combinations(combinators, new_left, right, current_chart)
+                    current_chart = add_combinations(combinators, new_left, right, current_chart, ccg)
 
     return current_chart
 
@@ -792,6 +814,6 @@ def CCGCKYParser(ccg, input_string, use_typer=False):
 
     for span in range(2, num_tokens + 1):
         for start in range(0, num_tokens - span + 1):
-            chart[(start, start + span)] = compute_chart(combinators, chart, span, start, use_typer)
+            chart[(start, start + span)] = compute_chart(combinators, chart, span, start, ccg, use_typer)
 
     return reconstruct([elem for elem in chart[(0, num_tokens)] if elem.type.show() == ccg.terminal])
