@@ -203,12 +203,15 @@ GRAMMAR = '''
 
     Weight("<", GrNom, Phrase\\GrNom) = 1.5
     Weight("<", GrNom, Phrase\\GrNom) = 1.5
-    Weight(">", Phrase/VbIntransSF, VbIntransSF) = 0.5
-    Weight(">", Phrase/VbIntransSM, VbIntransSM) = 0.5
+    Weight(">", Phrase/VbIntransSF, VbIntransSF) = 0.9
+    Weight(">", Phrase/VbIntransSM, VbIntransSM) = 0.9
     Weight("<", PhraseInterro, Phrase\\PhraseInterro) = 1.0
     Weight(">", GrNom/Nom, Nom) = 2.0
     Weight("<", GrNom, GrNom\\GrNom) = 0.8
     Weight("<", GrNom, Phrase\\GrNom) = 0.8
+    Weight(">", GrNom[Masc]/Nom[Masc], Nom[Masc]) = 1.8
+    Weight("<", GrNom[Masc], Phrase\\GrNom[Masc]) = 1.8
+
 
 '''
 
@@ -345,7 +348,10 @@ def run(txt, grammar):
         # print("##########################################################\n")
         # Use the CCGCKYParser to parse the current sentence,
         # setting 'use_typer' to False.
-        parses = CCGCKYParser(ccg, sentence, use_typer=False)
+        parses, maxweight = CCGCKYParser(ccg, sentence, use_typer=False)
+        onlymax = True
+        if onlymax:
+            parses = [parse for parse in parses if parse.weight == maxweight]
         cpt_n = 0
 
         if parses and word_test in sentence:
@@ -354,7 +360,7 @@ def run(txt, grammar):
                 #print(parse.show(sem=True))
                 print(parse.show(sem=False))
                 #print(parse.to_nltk_tree())
-                print(parse.current.expr.show(), '\n', ",".join([str(d["weight"]) for d in parse.current.derivation]), '\n', parse.current.sem.show(), '\n')
+                print(parse.current.expr.show(), '\n', parse.current.sem.show(), '\n')
                 # cpt_n += 1
                 #break
             #print(sentence, " : ", cpt_n, "parses valides")

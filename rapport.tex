@@ -250,10 +250,18 @@ Cela suppose de pondérer les dérivations CCG, c’est-à-dire les règles
 lexicales et les règles d’inférence.}
 \end{exo}
 
-TO DO ?
+Le calcul des poids se fait au moment de la construction des dérivations individuelles, notre algorithme n'élague pas au fur et à mesure les arbres qui n'auront vraisemblablement pas le meilleur poids, nous calculer les poids de chaque arbre. Nous gardons alors toutes les dérivations qui ont le meilleur poids, même si elles sont plusieurs.\\
+La définition des poids a été intégrée directement à la grammaire, nous pouvons définir un poids pour une combinaison d'un combinateur, d'un fils gauche et d'un fils droit, cela correspond à la formule $\psi$ du cours. Le poids d'une dérivation est alors le poids de ses différents fils multipliés avec le poids de la combinaison.\\
+\textit{Exemple :}
+\begin{verbatim}
+Weight("<", GrNom, Phrase\\GrNom) = 1.5
+\end{verbatim}
+Correspond à définir la transition $Phrase \rightarrow (GrNom, Phrase\\GrNom)$ par le combinateur ApplLeft comme ayant un poids de 1.5\\
+
+Les poids ont été définis arbitrairement et ne sont pas complets, ils peuvent dépendre de ce que l'on recherche (avoir une structure correspondant à une lecture de gauche à droite par exemple).
 
 \begin{exo}[NLTK Tree]
-{Votre implémentation devra suivre l’interface existante dans nltk et renvoyer
+\textit{Votre implémentation devra suivre l’interface existante dans nltk et renvoyer
 une seule analyse, celle de poids maximal sous forme d’objet nltk.Tree.}
 \end{exo}
 

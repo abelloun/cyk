@@ -180,7 +180,7 @@ class Judgement:
         self.type = type_judg
         self.cpt = 0
         self.sem = sem
-        self.derivation = derivation if derivation else [{"weight": weight,"derivation": []}]
+        self.derivation = derivation if derivation else [{"derivation": []}]
 
     def show(self, printsem=False):
         """
@@ -283,9 +283,8 @@ class Judgement:
         self.derivation = []
         derivations_list = [judgment.derivation for judgment in judmts]
         for derivations in product(*derivations_list):
-            tt_weight = max(combinator_weight, max(derv["weight"] for derv in derivations))
             pst = [combinator, sigma, judmts]
-            der = {"weight": tt_weight, "derivation": pst}
+            der = {"derivation": pst}
             self.derivation.append(der)
         self.sem = sem
         return self

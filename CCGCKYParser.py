@@ -47,6 +47,7 @@ from CCGLambdas import LambdaTermVar, LambdaTermApplication, LambdaTermLambda
 from CCGTypes import CCGType, CCGTypeVar, CCGTypeComposite, CCGTypeAtomicVar
 from CCGExprs import CCGExprVar, CCGExprConcat
 from nltk.tree import Tree
+import random
 
 
 class TokenError(Exception):
@@ -192,7 +193,7 @@ class Inference:
         xxx = " " * (wdt - ldn + 1 - max(0, (wdt - ldn)//2))
         name = self.name
         ctr = center(wdt, ldn)
-        return f"{center(wdt, lup)}{up}\n{rep}{name}{self.concl.derivation[0]['weight']}\n{ctr}{down}{xxx}"
+        return f"{center(wdt, lup)}{up}\n{rep}{name}\n{ctr}{down}{xxx}"
 
     def match(self, data, ccg):
         """
@@ -229,27 +230,7 @@ class Inference:
             sem = (self.sem)(data)
 
         conc = concl.replace(sigma)
-        ttw = -1
-        if self.name in ccg.weights:
-            for w in ccg.weights[self.name]:
-                ttw = w.weight
-                for (l, r) in zip(hyps, w.premices):
-                    if CCGType.unify(l.replace(sigma).type, r.replace(sigma), sigma):
-                        gamma = l.derivation[0]['weight'] if len(l.derivation) else 42
-                        print('ok : ', l.replace(sigma).show(), ttw, gamma)
-                        ttw = ttw * gamma
-                    else:
-                        ttw = -1
-                        break
-                if ttw >= 0:
-                    print("Yes !", ttw)
-                    break
-        if ttw < 0:
-            print("No !", ttw)
-            ttw = 0
-        else:
-            print("Yes !", ttw)
-        return conc.deriving(self, sigma, data, sem, ttw)
+        return conc.deriving(self, sigma, data, sem, 1.0)
 
     def replace(self, sigma):
         """
@@ -492,7 +473,7 @@ class CKYDerivation:
     >>> print(derivation.show())
     """
 
-    def __init__(self, current, past, combinator):
+    def __init__(self, current, past, combinator, weight):
         """
         Initialize a CKYDerivation object.
 
@@ -511,6 +492,7 @@ class CKYDerivation:
         self.current = current
         self.past = past
         self.combinator = combinator
+        self.weight = weight
 
     def to_nltk_tree(self):
         """
@@ -587,12 +569,13 @@ class CKYDerivation:
 
         if len(self.past) == 1:
             current_show = self.current.type.show()
-            comb = self.combinator.name + ":" + str(self.current.derivation[0]['weight'])
+            comb = self.combinator.name
+            w = str(self.weight)
             top, size = self.past[0].sub_show(sem)
 
             if sem:
                 current_sem = self.current.sem.show()
-                offset = max(len(current_show), len(current_sem), size)
+                offset = max(len(current_show) + len(current_sem) + len(w), size)
                 ntop = top.split("\n")
                 res = ""
                 offspace_s = ((offset-len(current_sem))//2)*" "
@@ -617,15 +600,16 @@ class CKYDerivation:
         if len(self.past) == 2:
             topl, sizel = self.past[0].sub_show(sem)
             topr, sizer = self.past[1].sub_show(sem)
+            w = str(self.weight)
             totsize = sizel+sizer+3
             toplm = topl.split("\n")
             toprm = topr.split("\n")
-            current_show = self.current.type.show()
+            current_show = self.current.type.show() + " " + w
 
-            comb = self.combinator.name + ":" + str(self.current.derivation[0]['weight'])
+            comb = self.combinator.name
             if sem:
                 current_sem = self.current.sem.show()
-                offset = max(len(current_show), len(current_sem), totsize)
+                offset = max(len(current_show) + len(current_sem) + len(w), totsize)
                 offspace_s = ((offset-len(current_sem))//2)*" "
             else:
                 offset = max(len(current_show), totsize)
@@ -749,7 +733,7 @@ def compute_chart(combinators, chart, span, start, ccg, use_typer=False):
     return current_chart
 
 
-def reconstruct(parses):
+def reconstruct(parses, ccg):
     """
     Reconstruct CKY derivations from judgements.
 
@@ -766,14 +750,22 @@ def reconstruct(parses):
     [CKYDerivation(parse1), CKYDerivation(parse2)]
     """
     result = []
+    w = 1.0
     for parse in parses:
         for deriv in parse.derivation:
             if deriv["derivation"]:
-                past = reconstruct(deriv["derivation"][2])
-                result.append(CKYDerivation(parse, past, deriv["derivation"][0]))
+                p = deriv["derivation"][2]
+                (past, w2) = reconstruct(p, ccg)
+                comb = deriv["derivation"][0]
+                w *= w2
+                if comb.name in ccg.weights:
+                    for weighttest in ccg.weights[comb.name]:
+                        if [s.type.show() for s in p] == [s.show() for s in weighttest.premices]:
+                            w*=weighttest.weight
+                result.append(CKYDerivation(parse, past, comb, w))
             else:
-                result.append(CKYDerivation(parse, None, None))
-    return result
+                result.append(CKYDerivation(parse, None, None, w))
+    return (result, w)
 
 
 def CCGCKYParser(ccg, input_string, use_typer=False):
@@ -816,4 +808,4 @@ def CCGCKYParser(ccg, input_string, use_typer=False):
         for start in range(0, num_tokens - span + 1):
             chart[(start, start + span)] = compute_chart(combinators, chart, span, start, ccg, use_typer)
 
-    return reconstruct([elem for elem in chart[(0, num_tokens)] if elem.type.show() == ccg.terminal])
+    return reconstruct([elem for elem in chart[(0, num_tokens)] if elem.type.show() == ccg.terminal], ccg)
