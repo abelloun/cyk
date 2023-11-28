@@ -67,7 +67,7 @@ The project is still under development
 - [x] Is adaptive (new rules can be easily added), rules must be binarized so unitary rules must be treated this way in the CKY Parser
 - [x] Is well documented (pylint scores > 8/10)
 - [x] Is well tested (99% coverage)
-- [ ] Is not able to compute weights on derivations
+- [x] Is able to compute weights on derivations
 - [ ] Does not check cycles in syntax shortcuts of type
 - [ ] Does not come with a sentence generator using the parsed grammar
 - [ ] Does not handle errors cleanly (unclear error messages)
